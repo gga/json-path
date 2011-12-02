@@ -1,8 +1,6 @@
 (ns json-path
   [:use [midje.sweet]])
 
-(unfinished )
-
 (defn- eval-expr [[expr-type & operands] object]
   (cond
    (= expr-type :eq) (apply = (map #(eval-expr % object) operands))
@@ -31,89 +29,89 @@
   (sort (select-by [:key "*"] {:hello "world", :foo "bar"})) => ["bar", "world"]
   (sort (select-by [:key "*"] [{:hello "world"}, {:foo "bar"}])) => ["bar", "world"])
 
+(defn- extract-sub-tree [start end stream]
+  (take-while #(not (= end %)) (drop-while #(= start %) stream)))
+
+(facts
+  (extract-sub-tree 4 8 (range 4 10)) => [5 6 7])
+
 (defn parse-expr [remaining]
   (let [supported-ops #{"="}
         lhs (take-while #(not (supported-ops %)) remaining)
         op (first (drop-while #(not (supported-ops %)) remaining))
         rhs (rest (drop-while #(not (supported-ops %)) remaining))]
-    {:remaining '(), :tree [({"=" :eq} op)
-                            (parse {:remaining lhs, :tree []})
-                            (parse {:remaining rhs, :tree []})]}))
+    [({"=" :eq} op) (parse lhs) (parse rhs)]))
 
 (fact
-  (:tree (parse-expr  '("@" "." "foo" "=" "\"" "baz" "\"")))
+  (parse-expr  '("@" "." "foo" "=" "\"" "baz" "\""))
   =>
   [:eq [:path [[:current] [:child] [:key "foo"]]] [:val "baz"]]
   (provided
-    (parse {:remaining '("@" "." "foo"), :tree []}) => [:path [[:current] [:child] [:key "foo"]]]
-    (parse {:remaining '("\"" "baz" "\""), :tree []}) => [:val "baz"]))
+    (parse '("@" "." "foo")) => [:path [[:current] [:child] [:key "foo"]]]
+    (parse '("\"" "baz" "\"")) => [:val "baz"]))
 
 (defn- parse-indexer [remaining]
-  (let [sub-expr (take-while #(not (= "]" %)) (drop 1 remaining))
-        next (first sub-expr)
-        trailing (drop 1 (drop-while #(not (= "]" %)) remaining))]
+  (let [next (first remaining)]
     (cond
-     (= next "*") {:remaining trailing, :tree [:index "*"]}
-     (= "?(" next) {:remaining trailing,
-                    :tree (:tree (parse-expr (take-while #(not (= ")" %)) sub-expr)))}
-     :else {:remaining trailing, :tree [:index next]})))
+     (= next "*") [:index "*"]
+     (= "?(" next) [:filter (parse-expr (extract-sub-tree "?(" ")" (drop 1 remaining)))]
+     :else [:index next])))
 
-;.;. FAIL at (NO_SOURCE_FILE:1)
-;.;.     Expected: [:index "*"]
-;.;.       Actual: [:index nil]
-;.;. 
-;.;. FAIL at (NO_SOURCE_FILE:1)
-;.;.     Expected: [:index "3"]
-;.;.       Actual: [:index nil]
-;.;. 
-;.;. FAIL at (NO_SOURCE_FILE:1)
-;.;. You claimed the following was needed, but it was never used:
-;.;.     (parse-expr (quote ("\"" "bar" "\"" "=" "\"" "bar" "\"")))
-;.;. 
-;.;. FAIL at (NO_SOURCE_FILE:1)
-;.;.     Expected: [:filter [:eq [:val "bar"] [:val "bar"]]]
-;.;.       Actual: [:index "\""]
 (fact
-  (:tree (parse-indexer '("*"))) => [:index "*"]
-  (:tree (parse-indexer '("3"))) => [:index "3"]
-  (:tree (parse-indexer '("?(" "\"" "bar" "\"" "=" "\"" "bar" "\"" ")"))) => [:filter [:eq [:val "bar"] [:val "bar"]]]
-  (provided
-    (parse-expr '("\"" "bar" "\"" "=" "\"" "bar" "\"")) => [:eq [:val "bar"] [:val "bar"]]))
+  (parse-indexer '("*")) => [:index "*"]
+  (parse-indexer '("3")) => [:index "3"]
+  (parse-indexer '("?(" "\"" "bar" "\"" "=" "\"" "bar" "\"" ")")) => [:filter [:eq [:val "bar"] [:val "bar"]]])
 
-(defn- parse [{:keys [remaining tree] :as ctxt}]
-  (let [next (first remaining)
-        simple-cmd ({"$" :root, "." :child, ".." :all-children, "@" :current} next)]
-    (if (empty? remaining)
-      tree
-      (recur (cond
-              (not (nil? simple-cmd)) {:remaining (rest remaining), :tree (conj tree [simple-cmd])}
-              (= "[" next) (parse-indexer (assoc ctxt :remaining remaining))
-              (= "*" next) {:remaining (rest remaining), :tree (conj tree [:key "*"])}
-              :else {:remaining (rest remaining), :tree (conj tree [:key next])})))))
+(defn- parse-path-components [parts]
+  (let [converter (fn [part]
+                    (let [path-cmds {"$" :root, "." :child, ".." :all-children, "@" :current}]
+                      (if (path-cmds part)
+                        [(path-cmds part)]
+                        [:key part])))]
+    (vec (map converter parts))))
+
+(defn parse [remaining]
+  (let [next (first remaining)]
+    (cond
+     (empty? remaining) []
+     (= "\"" next) [:val (apply str (extract-sub-tree "\"" "\"" remaining))]
+     (= "[" next) (do
+                    (let [idx (parse-indexer (extract-sub-tree "[" "]" remaining))
+                          rem (drop 1 (drop-while #(not (= "]" %)) remaining))]
+                      (if (not (empty? rem))
+                        [idx (parse rem)]
+                        idx)))
+     :else (do
+             (let [pth (parse-path-components (extract-sub-tree "" "[" remaining))
+                   rem (drop-while #(not (= "[" %)) remaining)]
+               (if (not (empty? rem))
+                 [:path (conj pth (parse rem))]
+                 [:path pth]))))))
 
 (facts
-  (parse {:remaining '("$"), :tree []}) => [:path [:root]]
-  (parse {:remaining '("$" "." "*"), :tree []}) => [:path [:root] [:child] [:key "*"]]
-  (parse {:remaining '("$" "." "foo" "[" "3" "]"), :tree []}) => [:path [:root] [:child] [:key "foo"] [:index "3"]])
+  (parse '("\"" "bar" "\"")) => [:val "bar"]
+  (parse '("$")) => [:path [[:root]]]
+  (parse '("$" "." "*")) => [:path [[:root] [:child] [:key "*"]]]
+  (parse '("$" "." "foo" "[" "3" "]")) => [:path [[:root] [:child] [:key "foo"] [:index "3"]]]
+  (parse '("[" "3" "]" "." "bar")) => [[:index "3"] [:path [[:child] [:key "bar"]]]])
 
 (defn- parse-path [path]
-  (parse {:remaining (re-seq #"\.\.|[.*$@\[\]\(\)\"=]|\d+|\w+|\?\(" path),
-          :tree []}))
+  (parse (re-seq #"\.\.|[.*$@\[\]\(\)\"=]|\d+|\w+|\?\(" path)))
 
 (facts
   (parse-path "") => []
-  (parse-path "$") => [[:root]]
-  (parse-path "$.hello") => [[:root] [:child] [:key "hello"]]
-  (parse-path "$.*") => [[:root] [:child] [:key "*"]]
-  (parse-path "$..hello") => [[:root] [:all-children] [:key "hello"]]
-  (parse-path "$.foo[3]") => [[:root] [:child] [:key "foo"] [:index "3"]]
-  (parse-path "foo[*]") => [[:key "foo"] [:index "*"]]
-  (parse-path "$.foo[?(@.bar=\"baz\")].hello") => [[:root] [:child] [:key "foo"]
-                                                     [:filter [:eq [:path [:current]
-                                                                    [:child]
-                                                                    [:key "bar"]]
-                                                               [:val "baz"]]]
-                                                     [:key "hello"]])
+  (parse-path "$") => [:path [[:root]]]
+  (parse-path "$.hello") => [:path [[:root] [:child] [:key "hello"]]]
+  (parse-path "$.*") => [:path [[:root] [:child] [:key "*"]]]
+  (parse-path "$..hello") => [:path [[:root] [:all-children] [:key "hello"]]]
+  (parse-path "$.foo[3]") => [:path [[:root] [:child] [:key "foo"] [:index "3"]]]
+  (parse-path "foo[*]") => [:path [[:key "foo"] [:index "*"]]]
+  (parse-path "$.foo[?(@.bar=\"baz\")].hello") => [:path [[:root] [:child] [:key "foo"]
+                                                          [:filter [:eq [:path [[:current]
+                                                                                [:child]
+                                                                                [:key "bar"]]]
+                                                                    [:val "baz"]]]
+                                                          [:path [[:key "hello"]]]]])
 
 (defn- path-filter? [[opcode & operands]]
   (not (empty? (filter #(= opcode %) [:root :current :child :all-children :index :filter]))))
