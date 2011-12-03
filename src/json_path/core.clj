@@ -1,34 +1,6 @@
 (ns json-path
   [:use [midje.sweet]])
 
-(defn- eval-expr [[expr-type & operands] object]
-  (cond
-   (= expr-type :eq) (apply = (map #(eval-expr % object) operands))
-   (= expr-type :val) (first operands)
-   (= expr-type :path) (eval-path operands object)))
-
-(facts
-  (eval-expr [:eq [:val "a"] [:val "b"]] {}) => falsey
-  (eval-expr [:eq [:val "a"] [:val "a"]] {}) => truthy
-  (eval-expr [:path [:key "foo"]] {:foo "bar"}) => "bar"
-  (eval-expr [:eq [:path [:key "foo"]] [:val "bar"]] {:foo "bar"}) => truthy)
-
-(defn- select-by [[opcode & operands :as obj-spec] object]
-  (cond
-   (sequential? object) (vec (flatten (filter #(not (empty? %))
-                                              (map #(select-by obj-spec %) object))))
-   :else (cond
-          (= (first operands) "*") (vec (vals object))
-          :else ((keyword (first operands)) object))))
-
-(facts
-  (select-by [:key "hello"] {:hello "world"}) => "world"
-  (select-by [:key "hello"] [{:hello "foo"} {:hello "bar"}]) => ["foo" "bar"]
-  (select-by [:key "hello"] [{:blah "foo"} {:hello "bar"}]) => [ "bar"]
-  (select-by [:key "*"] {:hello "world"}) => ["world"]
-  (sort (select-by [:key "*"] {:hello "world", :foo "bar"})) => ["bar", "world"]
-  (sort (select-by [:key "*"] [{:hello "world"}, {:foo "bar"}])) => ["bar", "world"])
-
 (defn- extract-sub-tree [start end stream]
   (take-while #(not (= end %)) (drop-while #(= start %) stream)))
 
@@ -79,21 +51,21 @@
                     (let [idx (parse-indexer (extract-sub-tree "[" "]" remaining))
                           rem (drop 1 (drop-while #(not (= "]" %)) remaining))]
                       (if (not (empty? rem))
-                        [idx (parse rem)]
-                        idx)))
+                        [:selector idx (parse rem)]
+                        [:selector idx])))
      :else (do
              (let [pth (parse-path-components (extract-sub-tree "" "[" remaining))
                    rem (drop-while #(not (= "[" %)) remaining)]
                (if (not (empty? rem))
-                 [:path (conj pth (parse rem))]
+                 [:path pth (parse rem)]
                  [:path pth]))))))
 
 (facts
   (parse '("\"" "bar" "\"")) => [:val "bar"]
   (parse '("$")) => [:path [[:root]]]
   (parse '("$" "." "*")) => [:path [[:root] [:child] [:key "*"]]]
-  (parse '("$" "." "foo" "[" "3" "]")) => [:path [[:root] [:child] [:key "foo"] [:index "3"]]]
-  (parse '("[" "3" "]" "." "bar")) => [[:index "3"] [:path [[:child] [:key "bar"]]]])
+  (parse '("$" "." "foo" "[" "3" "]")) => [:path [[:root] [:child] [:key "foo"]] [:selector [:index "3"]]]
+  (parse '("$" "[" "3" "]" "." "bar")) => [:path [[:root]] [:selector [:index "3"] [:path [[:child] [:key "bar"]]]]])
 
 (defn- parse-path [path]
   (parse (re-seq #"\.\.|[.*$@\[\]\(\)\"=]|\d+|\w+|\?\(" path)))
@@ -104,14 +76,42 @@
   (parse-path "$.hello") => [:path [[:root] [:child] [:key "hello"]]]
   (parse-path "$.*") => [:path [[:root] [:child] [:key "*"]]]
   (parse-path "$..hello") => [:path [[:root] [:all-children] [:key "hello"]]]
-  (parse-path "$.foo[3]") => [:path [[:root] [:child] [:key "foo"] [:index "3"]]]
-  (parse-path "foo[*]") => [:path [[:key "foo"] [:index "*"]]]
-  (parse-path "$.foo[?(@.bar=\"baz\")].hello") => [:path [[:root] [:child] [:key "foo"]
-                                                          [:filter [:eq [:path [[:current]
-                                                                                [:child]
-                                                                                [:key "bar"]]]
-                                                                    [:val "baz"]]]
-                                                          [:path [[:key "hello"]]]]])
+  (parse-path "$.foo[3]") => [:path [[:root] [:child] [:key "foo"]] [:selector [:index "3"]]]
+  (parse-path "foo[*]") => [:path [[:key "foo"]] [:selector [:index "*"]]]
+  (parse-path "$.foo[?(@.bar=\"baz\")].hello") => [:path [[:root] [:child] [:key "foo"]]
+                                                   [:selector [:filter [:eq [:path [[:current]
+                                                                                    [:child]
+                                                                                    [:key "bar"]]]
+                                                                        [:val "baz"]]]
+                                                    [:path [[:child] [:key "hello"]]]]])
+
+(defn- eval-expr [[expr-type & operands] object]
+  (cond
+   (= expr-type :eq) (apply = (map #(eval-expr % object) operands))
+   (= expr-type :val) (first operands)
+   (= expr-type :path) (eval-path operands object)))
+
+(facts
+  (eval-expr [:eq [:val "a"] [:val "b"]] {}) => falsey
+  (eval-expr [:eq [:val "a"] [:val "a"]] {}) => truthy
+  (eval-expr [:path [:key "foo"]] {:foo "bar"}) => "bar"
+  (eval-expr [:eq [:path [:key "foo"]] [:val "bar"]] {:foo "bar"}) => truthy)
+
+(defn- select-by [[opcode & operands :as obj-spec] object]
+  (cond
+   (sequential? object) (vec (flatten (filter #(not (empty? %))
+                                              (map #(select-by obj-spec %) object))))
+   :else (cond
+          (= (first operands) "*") (vec (vals object))
+          :else ((keyword (first operands)) object))))
+
+(facts
+  (select-by [:key "hello"] {:hello "world"}) => "world"
+  (select-by [:key "hello"] [{:hello "foo"} {:hello "bar"}]) => ["foo" "bar"]
+  (select-by [:key "hello"] [{:blah "foo"} {:hello "bar"}]) => [ "bar"]
+  (select-by [:key "*"] {:hello "world"}) => ["world"]
+  (sort (select-by [:key "*"] {:hello "world", :foo "bar"})) => ["bar", "world"]
+  (sort (select-by [:key "*"] [{:hello "world"}, {:foo "bar"}])) => ["bar", "world"])
 
 (defn- path-filter? [[opcode & operands]]
   (not (empty? (filter #(= opcode %) [:root :current :child :all-children :index :filter]))))
