@@ -3,6 +3,8 @@
 
 (unfinished )
 
+(defn parse [tokens])
+
 (defn- extract-sub-tree [start end stream]
   (take-while #(not (= end %)) (drop-while #(= start %) stream)))
 
@@ -84,6 +86,8 @@
                                                                         [:val "baz"]]]
                                                     [:path [[:child] [:key "hello"]]]]])
 
+(defn walk [expr object])
+
 (defn- eval-expr [[expr-type & operands :as expr] object]
   (cond
    (= expr-type :eq) (apply = (map #(eval-expr % object) operands))
@@ -138,7 +142,7 @@
                                  (if (= "*" sel)
                                    object
                                    (nth object (Integer/parseInt sel))))
-   (= :filter (first sel-expr)) (filter #(eval-expr (nth sel-expr 1) %) object))))
+   (= :filter (first sel-expr)) (filter #(eval-expr (nth sel-expr 1) %) object)))
 
 (fact
   (walk-selector [:index "1"] ["foo", "bar", "baz"]) => "bar"
