@@ -31,7 +31,7 @@
                  {:current  [{:bar "wrong"} {:bar "baz"}]}) => [{:bar "baz"}])
 
 (facts
-  (walk [:path [[:root]]] {:current ...json...}) => ...json...
+  (walk [:path [[:root]]] {:root ...json...}) => ...json...
   (walk [:path [[:child]]] {:current ...json...}) => ...json...
   (walk [:path [[:current]]] {:current ...json...}) => ...json...
   (walk [:path [[:key "foo"]]] {:current {:foo "bar"}}) => "bar"
@@ -59,5 +59,5 @@
                                           [:key "bar"]]]
                               [:val "baz"]]]
           [:path [[:child] [:key "hello"]]]]]
-        {:current {:foo [{:bar "wrong" :hello "goodbye"}
-                         {:bar "baz" :hello "world"}]}}) => ["world"])
+        {:root {:foo [{:bar "wrong" :hello "goodbye"}
+                      {:bar "baz" :hello "world"}]}}) => ["world"])
