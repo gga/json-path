@@ -2,46 +2,48 @@
 
 (declare walk)
 
-(defn eval-expr [[expr-type & operands :as expr] object]
+(defn eval-expr [[expr-type & operands :as expr] context]
   (cond
-   (= expr-type :eq) (apply = (map #(eval-expr % object) operands))
+   (= expr-type :eq) (apply = (map #(eval-expr % context) operands))
    (= expr-type :val) (first operands)
-   (= expr-type :path) (walk expr object)))
+   (= expr-type :path) (walk expr context)))
 
-(defn select-by [[opcode & operands :as obj-spec] object]
+(defn select-by [[opcode & operands :as obj-spec] context]
   (cond
-   (sequential? object) (vec (flatten (filter #(not (empty? %))
-                                              (map #(select-by obj-spec %) object))))
+   (sequential? (:current context)) (vec (flatten (filter #(not (empty? %))
+                                                          (map #(select-by obj-spec (assoc context :current %))
+                                                               (:current context)))))
    :else (cond
-          (= (first operands) "*") (vec (vals object))
-          :else ((keyword (first operands)) object))))
+          (= (first operands) "*") (vec (vals (:current context)))
+          :else ((keyword (first operands)) (:current context)))))
 
 (defn obj-aggregator [obj]
   (let [obj-vals (vec (filter map? (vals obj)))
         children (flatten (map obj-aggregator obj-vals))]
     (vec (concat obj-vals children))))
 
-(defn walk-path [[next & parts] object]
+(defn walk-path [[next & parts] context]
   (cond
-   (nil? next) object
-   (= [:root] next) (walk-path parts object)
-   (= [:child] next) (walk-path parts object)
-   (= [:current] next) (walk-path parts object)
-   (= [:all-children] next) (walk-path parts (vec (concat [object] (obj-aggregator object))))
-   (= :key (first next)) (walk-path parts (select-by next object))))
+   (nil? next) (:current context)
+   (= [:root] next) (walk-path parts (assoc context :current (:root context)))
+   (= [:child] next) (walk-path parts context)
+   (= [:current] next) (walk-path parts context)
+   (= [:all-children] next) (walk-path parts (assoc context :current (vec (concat [(:current context)]
+                                                                                  (obj-aggregator (:current context))))))
+   (= :key (first next)) (walk-path parts (assoc context :current (select-by next context)))))
 
-(defn walk-selector [sel-expr object]
+(defn walk-selector [sel-expr context]
   (cond
    (= :index (first sel-expr)) (let [sel (nth sel-expr 1)]
                                  (if (= "*" sel)
-                                   object
-                                   (nth object (Integer/parseInt sel))))
-   (= :filter (first sel-expr)) (filter #(eval-expr (nth sel-expr 1) %) object)))
+                                   (:current context)
+                                   (nth (:current context) (Integer/parseInt sel))))
+   (= :filter (first sel-expr)) (filter #(eval-expr (nth sel-expr 1) (assoc context :current %)) (:current context))))
 
-(defn walk [[opcode operand continuation] object]
+(defn walk [[opcode operand continuation] context]
   (let [down-obj (cond
-         (= opcode :path) (walk-path operand object)
-         (= opcode :selector) (walk-selector operand object))]
+         (= opcode :path) (walk-path operand context)
+         (= opcode :selector) (walk-selector operand context))]
     (if continuation
-      (walk continuation down-obj)
+      (walk continuation (assoc context :current down-obj))
       down-obj)))
