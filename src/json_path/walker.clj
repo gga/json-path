@@ -34,10 +34,12 @@
 
 (defn walk-selector [sel-expr context]
   (cond
-   (= :index (first sel-expr)) (let [sel (nth sel-expr 1)]
-                                 (if (= "*" sel)
-                                   (:current context)
-                                   (nth (:current context) (Integer/parseInt sel))))
+   (= :index (first sel-expr)) (if (seq? (:current context))
+                                 (let [sel (nth sel-expr 1)]
+                                   (if (= "*" sel)
+                                     (:current context)
+                                     (nth (:current context) (Integer/parseInt sel))))
+                                 (throw (Exception. "object must be an array.")))
    (= :filter (first sel-expr)) (filter #(eval-expr (nth sel-expr 1) (assoc context :current %)) (:current context))))
 
 (defn walk [[opcode operand continuation] context]

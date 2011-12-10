@@ -25,10 +25,14 @@
                                                                    {:qux "zoo"}])
 
 (fact
-  (walk-selector [:index "1"] {:current  ["foo", "bar", "baz"]}) => "bar"
+  (walk-selector [:index "1"] {:current ["foo", "bar", "baz"]}) => "bar"
   (walk-selector [:index "*"] {:current ...array...}) => ...array...
   (walk-selector [:filter [:eq [:path [[:current] [:child] [:key "bar"]]] [:val "baz"]]]
                  {:current  [{:bar "wrong"} {:bar "baz"}]}) => [{:bar "baz"}])
+
+(fact "selecting places constraints on the shape of the object being selected from"
+  (walk-selector [:index "1"] {:current {:foo "bar"}}) => (throws Exception)
+  (walk-selector [:index "*"] {:current {:foo "bar"}}) => (throws Exception))
 
 (facts
   (walk [:path [[:root]]] {:root ...json...}) => ...json...
@@ -61,3 +65,9 @@
           [:path [[:child] [:key "hello"]]]]]
         {:root {:foo [{:bar "wrong" :hello "goodbye"}
                       {:bar "baz" :hello "world"}]}}) => ["world"])
+
+(facts "walking a nil object should be safe"
+  (walk [:path [[:root]]] nil) => nil
+  (walk [:path [[:root] [:child] [:key "foo"]]] {:bar "baz"}) => nil
+  (walk [:path [[:root] [:child] [:key "foo"] [:child] [:key "bar"]]]
+        {:foo {:baz "hello"}}) => nil)
