@@ -6,11 +6,12 @@
   (take-while #(not (= end %)) (drop-while #(= start %) stream)))
 
 (defn parse-expr [remaining]
-  (let [supported-ops #{"="}
+  (let [ops {"=" :eq, "!=" :neq, "<" :lt, "<=" :lt-eq, ">" :gt, ">=" :gt-eq}
+        supported-ops (set (keys ops))
         lhs (take-while #(not (supported-ops %)) remaining)
         op (first (drop-while #(not (supported-ops %)) remaining))
         rhs (rest (drop-while #(not (supported-ops %)) remaining))]
-    [({"=" :eq} op) (parse lhs) (parse rhs)]))
+    [(ops op) (parse lhs) (parse rhs)]))
 
 (defn parse-indexer [remaining]
   (let [next (first remaining)]
@@ -46,4 +47,4 @@
                  [:path pth]))))))
 
 (defn parse-path [path]
-  (parse (re-seq #"\.\.|[.*$@\[\]\(\)\"=]|\d+|\w+|\?\(" path)))
+  (parse (re-seq #"\.\.|[.*$@\[\]\(\)\"=]|\d+|\w+|\?\(|!=" path)))

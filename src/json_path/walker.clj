@@ -2,9 +2,16 @@
 
 (declare walk)
 
+(defn eval-eq-expr [fn ])
+
 (defn eval-expr [[expr-type & operands :as expr] context]
   (cond
    (= expr-type :eq) (apply = (map #(eval-expr % context) operands))
+   (= expr-type :neq) (not (apply = (map #(eval-expr % context) operands)))
+   (= expr-type :lt) (apply < (map #(eval-expr % context) operands))
+   (= expr-type :lt-eq) (apply <= (map #(eval-expr % context) operands))
+   (= expr-type :gt) (apply > (map #(eval-expr % context) operands))
+   (= expr-type :gt-eq) (apply >= (map #(eval-expr % context) operands))
    (= expr-type :val) (first operands)
    (= expr-type :path) (walk expr context)))
 

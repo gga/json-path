@@ -12,6 +12,13 @@
   =>
   [:eq [:path [[:current] [:child] [:key "foo"]]] [:val "baz"]])
 
+(facts "equality expressions should be parseable"
+  (parse-expr '("\"" "bar" "\"" "!=" "\"" "bar" "\"")) => [:neq [:val "bar"] [:val "bar"]]
+  (parse-expr '("\"" "bar" "\"" "<" "\"" "bar" "\"")) => [:lt [:val "bar"] [:val "bar"]]
+  (parse-expr '("\"" "bar" "\"" "<=" "\"" "bar" "\"")) => [:lt-eq [:val "bar"] [:val "bar"]]
+  (parse-expr '("\"" "bar" "\"" ">" "\"" "bar" "\"")) => [:gt [:val "bar"] [:val "bar"]]
+  (parse-expr '("\"" "bar" "\"" ">=" "\"" "bar" "\"")) => [:gt-eq [:val "bar"] [:val "bar"]])
+
 (fact
   (parse-indexer '("*")) => [:index "*"]
   (parse-indexer '("3")) => [:index "3"]
@@ -38,3 +45,11 @@
                                                                                     [:key "bar"]]]
                                                                         [:val "baz"]]]
                                                     [:path [[:child] [:key "hello"]]]]])
+
+;.;. FAIL at (NO_SOURCE_FILE:1)
+;.;. You claimed the following was needed, but it was never used:
+;.;.     (parse (fn* [p1__7284#] (contains? p1__7284# "!=")))
+(facts "equality tokens should be recognised"
+  (parse-path "10!=11") => truthy
+  (provided
+    (parse #(contains? % "!=")) => true))
