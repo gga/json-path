@@ -17,7 +17,7 @@ elements are supported.
   `>`, `>=`) and can use `@` to refer to objects from the current
   object.
 
-See `test/json_path/json_path_test.clj' for more examples.
+See `test/json_path/json_path_test.clj` for more examples.
 
 ## Missing
 
