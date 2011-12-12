@@ -46,10 +46,22 @@
                                                                         [:val "baz"]]]
                                                     [:path [[:child] [:key "hello"]]]]])
 
-;.;. FAIL at (NO_SOURCE_FILE:1)
-;.;. You claimed the following was needed, but it was never used:
-;.;.     (parse (fn* [p1__7284#] (contains? p1__7284# "!=")))
 (facts "equality tokens should be recognised"
   (parse-path "10!=11") => truthy
   (provided
-    (parse #(contains? % "!=")) => true))
+    (parse (contains "!=")) => true)
+  (parse-path "10=11") => truthy
+  (provided
+    (parse (contains "=")) => true)
+  (parse-path "10<11") => truthy
+  (provided
+    (parse (contains "<")) => true)
+  (parse-path "10<=11") => truthy
+  (provided
+    (parse (contains "<=")) => true)
+  (parse-path "10>11") => truthy
+  (provided
+    (parse (contains ">")) => true)
+  (parse-path "10>=11") => truthy
+  (provided
+    (parse (contains ">=")) => true))
