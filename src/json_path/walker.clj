@@ -41,7 +41,7 @@
 
 (defn walk-selector [sel-expr context]
   (cond
-   (= :index (first sel-expr)) (if (seq? (:current context))
+   (= :index (first sel-expr)) (if (sequential? (:current context))
                                  (let [sel (nth sel-expr 1)]
                                    (if (= "*" sel)
                                      (:current context)

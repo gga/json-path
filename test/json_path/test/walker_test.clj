@@ -33,7 +33,7 @@
 
 (fact
   (walk-selector [:index "1"] {:current ["foo", "bar", "baz"]}) => "bar"
-  (walk-selector [:index "*"] {:current ...array...}) => ...array...
+  (walk-selector [:index "*"] {:current [:a :b]}) => [:a :b]
   (walk-selector [:filter [:eq [:path [[:current] [:child] [:key "bar"]]] [:val "baz"]]]
                  {:current  [{:bar "wrong"} {:bar "baz"}]}) => [{:bar "baz"}])
 
@@ -57,7 +57,7 @@
                                               :quuz {:world "zux"}},
                                              {:world "zux"}]
   (walk [:selector [:index "1"]] {:current ["foo", "bar", "baz"]}) => "bar"
-  (walk [:selector [:index "*"]] {:current ...array...}) => ...array...
+  (walk [:selector [:index "*"]] {:current [:a :b]}) => [:a :b]
   (walk [:selector [:filter [:eq
                              [:path [[:current]
                                      [:child]
