@@ -1,6 +1,6 @@
 (ns json-path.walker)
 
-(declare walk)
+(declare walk eval-expr)
 
 (defn eval-eq-expr [op-form context operands]
   (apply op-form (map #(eval-expr % context) operands)))
