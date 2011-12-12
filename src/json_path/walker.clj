@@ -2,18 +2,15 @@
 
 (declare walk)
 
-(defn eval-eq-expr [fn ])
+(defn eval-eq-expr [op-form context operands]
+  (apply op-form (map #(eval-expr % context) operands)))
 
 (defn eval-expr [[expr-type & operands :as expr] context]
-  (cond
-   (= expr-type :eq) (apply = (map #(eval-expr % context) operands))
-   (= expr-type :neq) (not (apply = (map #(eval-expr % context) operands)))
-   (= expr-type :lt) (apply < (map #(eval-expr % context) operands))
-   (= expr-type :lt-eq) (apply <= (map #(eval-expr % context) operands))
-   (= expr-type :gt) (apply > (map #(eval-expr % context) operands))
-   (= expr-type :gt-eq) (apply >= (map #(eval-expr % context) operands))
-   (= expr-type :val) (first operands)
-   (= expr-type :path) (walk expr context)))
+  (let [ops {:eq =, :neq not=, :lt <, :lt-eq <=, :gt >, :gt-eq >=}]
+    (cond
+     (contains? ops expr-type) (eval-eq-expr (expr-type ops) context operands)
+     (= expr-type :val) (first operands)
+     (= expr-type :path) (walk expr context))))
 
 (defn select-by [[opcode & operands :as obj-spec] context]
   (cond

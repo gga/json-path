@@ -4,8 +4,6 @@
 
 (unfinished)
 
-;.;. Effort only fully releases its reward after a person refuses to
-;.;. quit. -- Hill
 (facts
   (eval-expr [:eq [:val "a"] [:val "b"]] {}) => falsey
   (eval-expr [:eq [:val "a"] [:val "a"]] {}) => truthy
