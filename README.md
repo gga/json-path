@@ -17,7 +17,7 @@ elements are supported.
   `>`, `>=`) and can use `@` to refer to objects from the current
   object.
 
-See `test/json_path/json_path_test.clj` for more examples.
+See [`test/json_path/test/json_path_test.clj`][eg] for more examples.
 
 ## Missing
 
@@ -55,3 +55,4 @@ Copyright (C) 2011 Giles Alexander
 Distributed under the MIT License.
 
 [jp]: http://goessner.net/articles/JsonPath/
+[eg]: https://github.com/gga/json-path/blob/master/test/json_path/test/json_path_test.clj
