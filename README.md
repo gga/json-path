@@ -9,7 +9,9 @@ elements are supported.
 * `.`: Descend to a single child.
 * `..`: Recursive descent to select all children.
 * `*` and `<name>`: Select the child objects matching a name, or all
-  immediate children when using `*`.
+  immediate children when using `*`. Unlike in JavaScript, the `name`
+  can contain hyphens (`-`). This is convenient as Clojure data
+  structures often use hyphens in keys.
 * `[<number>]` and `[*]`: Select either a specific element of an
   array, or all elements of an array.
 * `[?(<expr>)]`: Filter to select objects that match an
@@ -47,6 +49,11 @@ that maps contains keywords for the child objects.
 
     (json-path/at-path "$.foo" {:foo {:bar "Hello, world!"}})
     ; => {:bar "Hello, world!"}
+    
+## Contributors
+
+* [Giles Alexander](https://github.com/gga)
+* [Matthew Gertner](https://github.com/matthewgertner)
 
 ## License
 
