@@ -35,6 +35,7 @@
   (parse-path "") => []
   (parse-path "$") => [:path [[:root]]]
   (parse-path "$.hello") => [:path [[:root] [:child] [:key "hello"]]]
+  (parse-path "$.hello-world") => [:path [[:root] [:child] [:key "hello-world"]]]
   (parse-path "$.*") => [:path [[:root] [:child] [:key "*"]]]
   (parse-path "$..hello") => [:path [[:root] [:all-children] [:key "hello"]]]
   (parse-path "$.foo[3]") => [:path [[:root] [:child] [:key "foo"]] [:selector [:index "3"]]]
