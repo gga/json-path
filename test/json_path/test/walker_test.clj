@@ -36,8 +36,8 @@
                  {:current  [{:bar "wrong"} {:bar "baz"}]}) => [{:bar "baz"}])
 
 (fact "selecting places constraints on the shape of the object being selected from"
-  (walk-selector [:index "1"] {:current {:foo "bar"}}) => (throws Exception)
-  (walk-selector [:index "*"] {:current {:foo "bar"}}) => (throws Exception))
+  (walk-selector [:index "1"] {:current {:foo "bar"}}) => nil
+  (walk-selector [:index "*"] {:current {:foo "bar"}}) => nil)
 
 (facts
   (walk [:path [[:root]]] {:root ...json...}) => ...json...

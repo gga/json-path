@@ -42,8 +42,7 @@
                                  (let [sel (nth sel-expr 1)]
                                    (if (= "*" sel)
                                      (:current context)
-                                     (nth (:current context) (Integer/parseInt sel))))
-                                 (throw (Exception. "object must be an array.")))
+                                     (nth (:current context) (Integer/parseInt sel)))))
    (= :filter (first sel-expr)) (filter #(eval-expr (nth sel-expr 1) (assoc context :current %)) (:current context))))
 
 (defn walk [[opcode operand continuation] context]
