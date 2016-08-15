@@ -21,8 +21,14 @@
           (= (first operands) "*") (vec (vals (:current context)))
           :else ((keyword (first operands)) (:current context)))))
 
+(defn obj-vals [obj]
+  (cond
+    (seq? obj) obj
+    (map? obj) (filter map? (vals obj))
+    :else []))
+
 (defn obj-aggregator [obj]
-  (let [obj-vals (vec (filter map? (vals obj)))
+  (let [obj-vals (obj-vals obj)
         children (flatten (map obj-aggregator obj-vals))]
     (vec (concat obj-vals children))))
 

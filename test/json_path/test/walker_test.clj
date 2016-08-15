@@ -54,6 +54,17 @@
                                              {:world "bar",
                                               :quuz {:world "zux"}},
                                              {:world "zux"}]
+  (walk [:path [[:all-children]]]
+        {:current
+         (list {:hello {:world "foo"}}
+               {:baz {:world "bar"}})}) => [[{:hello {:world "foo"}}
+                                             {:baz {:world "bar"}}]
+                                            {:hello {:world "foo"}}
+                                            {:baz {:world "bar"}}
+                                            {:world "foo"}
+                                            {:world "bar"}]
+  (walk [:path [[:all-children]]]
+        {:current "scalar"}) => ["scalar"]
   (walk [:selector [:index "1"]] {:current ["foo", "bar", "baz"]}) => "bar"
   (walk [:selector [:index "*"]] {:current [:a :b]}) => [:a :b]
   (walk [:selector [:filter [:eq
