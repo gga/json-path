@@ -27,7 +27,10 @@
   (walk-path [[:root]] {:root ...root..., :current  ...obj...}) => ...root...
   (walk-path [[:root] [:child] [:key "foo"]] {:root {:foo "bar"}}) => "bar"
   (walk-path [[:all-children]] {:current {:foo "bar" :baz {:qux "zoo"}}}) => [{:foo "bar" :baz {:qux "zoo"}},
-                                                                   {:qux "zoo"}])
+                                                                              {:qux "zoo"}]
+  (walk-path [[:all-children] [:key "bar"]]
+             {:current {:foo [{:bar "wrong"}
+                              {:bar "baz"}]}}) => ["wrong" "baz"])
 
 (fact
   (walk-selector [:index "1"] {:current ["foo", "bar", "baz"]}) => "bar"

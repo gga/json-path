@@ -24,7 +24,7 @@
 (defn obj-vals [obj]
   (cond
     (seq? obj) obj
-    (map? obj) (filter map? (vals obj))
+    (map? obj) (filter #(or (map? %) (sequential? %)) (vals obj))
     :else []))
 
 (defn obj-aggregator [obj]
