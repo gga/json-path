@@ -23,7 +23,7 @@
 
 (defn obj-vals [obj]
   (cond
-    (seq? obj) obj
+    (sequential? obj) obj
     (map? obj) (filter #(or (map? %) (sequential? %)) (vals obj))
     :else []))
 

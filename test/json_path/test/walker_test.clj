@@ -30,7 +30,8 @@
                                                                               {:qux "zoo"}]
   (walk-path [[:all-children] [:key "bar"]]
              {:current {:foo [{:bar "wrong"}
-                              {:bar "baz"}]}}) => ["wrong" "baz"])
+                              {:bar "baz"}]}}) => ["wrong" "baz"]
+  (walk-path [[:all-children]] {:current [{:foo "bar"}]}) => [[{:foo "bar"}] {:foo "bar"}])
 
 (fact
   (walk-selector [:index "1"] {:current ["foo", "bar", "baz"]}) => "bar"
