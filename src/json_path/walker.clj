@@ -22,8 +22,13 @@
 
 (defn- map-selection [func selection]
   (let [sub-selection (map# (fn [[val key]] (with-parent-key key (func val))) selection)]
-    (if (seq? (first sub-selection))
-      (apply concat sub-selection)
+    (if (seq? sub-selection)
+      (->> sub-selection
+           (reduce (fn [col item] (if (seq? item)
+                                    (concat col item)
+                                    (conj col item)))
+                   [])
+           seq)
       sub-selection)))
 
 (defn select-by [[opcode & operands :as obj-spec] context]
