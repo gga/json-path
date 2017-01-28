@@ -20,20 +20,17 @@
 
 (defn select-by [[opcode & operands :as obj-spec] current-context]
   (let [obj (:value current-context)]
-    (cond
-      (sequential? obj) (->> (map-indexed (fn [idx child-obj] (m/with-context idx child-obj current-context)) obj)
-                             (map #(select-by obj-spec %))
-                             flatten
-                             (remove #(empty? (:value %))))
-      :else (cond
-              (= (first operands) "*") (map (fn [[k v]] (m/with-context k v current-context)) obj)
-              :else (let [key (keyword (first operands))]
-                      (m/with-context key (key obj) current-context))))))
+    (if (= (first operands) "*")
+      (cond (map? obj) (map (fn [[k v]] (m/with-context k v current-context)) obj)
+            (sequential? obj) (map-indexed (fn [idx child-obj] (m/with-context idx child-obj current-context)) obj)
+            :else '())
+      (let [key (keyword (first operands))]
+        (m/with-context key (key obj) current-context)))))
 
 (defn- obj-vals [current-context]
   (let [obj (:value current-context)]
     (cond
-      (seq? obj) (map-indexed (fn [idx child-obj] (m/with-context idx child-obj current-context)) obj)
+      (sequential? obj) (map-indexed (fn [idx child-obj] (m/with-context idx child-obj current-context)) obj)
       (map? obj) (->> obj
                       (filter (fn [[k v]] (or (map? v) (sequential? v))))
                       (map (fn [[k v]] (m/with-context k v current-context))))

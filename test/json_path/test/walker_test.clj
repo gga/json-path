@@ -18,22 +18,19 @@
 
 (facts
   (select-by [:key "hello"] (m/root {:hello "world"})) => (m/create "world" [:hello])
-  (select-by [:key "hello"] (m/root [{:hello "foo"} {:hello "bar"}])) => (list (m/create "foo" [0 :hello]) (m/create "bar" [1 :hello]))
-  (select-by [:key "hello"] (m/root [{:blah "foo"} {:hello "bar"}])) => (list (m/create "bar" [1 :hello]))
+  (select-by [:key "hello"] {:current [{:hello "foo"} {:hello "bar"}]}) => (m/create nil [:hello])
   (select-by [:key "*"] (m/root {:hello "world"})) => (list (m/create "world" [:hello]))
-  (sort-by first (select-by [:key "*"] (m/root {:hello "world" :foo "bar"}))) => (list (m/create "bar" [:foo]) (m/create "world" [:hello]))
-  (sort-by first (select-by [:key "*"] (m/root [{:hello "world"} {:foo "bar"}]))) => (list (m/create "world" [0 :hello]) (m/create "bar" [1 :foo])))
+  (select-by [:key "*"] (m/root {:hello "world" :foo "bar"})) => (list (m/create "bar" [:foo]) (m/create "world" [:hello]))
+  (select-by [:key "*"] (m/root [{:hello "world"} {:foo "bar"}])) => (list (m/create {:hello "world"} [0]) (m/create {:foo "bar"} [1]))
+  (select-by [:key "*"] {:current 1}) => '())
 
 (facts
   (walk-path [[:root]] {:root (m/root ...root...), :current  (m/root ...obj...)}) => (m/create ...root... [])
   (walk-path [[:root] [:child] [:key "foo"]] {:root (m/root {:foo "bar"})}) => (m/create "bar" [:foo])
-  (walk-path [[:key "foo"]] {:current (m/root [{:foo "bar"} {:foo "baz"} {:foo "qux"}])}) => (list (m/create "bar" [0 :foo])
-                                                                                                    (m/create "baz" [1 :foo])
-                                                                                                    (m/create "qux" [2 :foo]))
   (walk-path [[:all-children]] {:current (m/root {:foo "bar" :baz {:qux "zoo"}})}) => (list (m/create {:foo "bar" :baz {:qux "zoo"}} [])
                                                                                              (m/create {:qux "zoo"} [:baz]))
-  (distinct (walk-path [[:all-children] [:key "bar"]] ;; distinct works around dups, mentioned in https://github.com/gga/json-path/pull/6
-                       {:current (m/root '([{:bar "hello"}]))})) => (list (m/create "hello" [0 0 :bar]))
+  (walk-path [[:all-children] [:key "bar"]]
+             {:current (m/root '([{:bar "hello"}]))}) => (list (m/create "hello" [0 0 :bar]))
   (walk-path [[:all-children] [:key "bar"]]
              {:current (m/root {:foo [{:bar "wrong"}
                                        {:bar "baz"}]})}) => (list (m/create "wrong" [:foo 0 :bar])
@@ -95,6 +92,7 @@
          [:path [[:child] [:key "foo"]]]]
         {:current
          (m/root [{:foo 1} {:foo 2}])}) => (list (m/create 1 [0 :foo]) (m/create 2 [1 :foo]))
+  (walk [:path [[:key "*"]]] {:current 1}) => '()
   (walk [:selector [:filter [:eq
                              [:path [[:current]
                                      [:child]
