@@ -18,14 +18,18 @@
     (flatten (map func obj))
     (func obj)))
 
-(defn select-by [[opcode & operands :as obj-spec] current-context]
+(defn- select-all [current-context]
   (let [obj (:value current-context)]
-    (if (= (first operands) "*")
-      (cond (map? obj) (map (fn [[k v]] (m/with-context k v current-context)) obj)
-            (sequential? obj) (map-indexed (fn [idx child-obj] (m/with-context idx child-obj current-context)) obj)
-            :else '())
-      (let [key (keyword (first operands))]
-        (m/with-context key (key obj) current-context)))))
+    (cond (map? obj) (map (fn [[k v]] (m/with-context k v current-context)) obj)
+          (sequential? obj) (map-indexed (fn [idx child-obj] (m/with-context idx child-obj current-context)) obj)
+          :else '())))
+
+(defn select-by [[opcode & operands :as obj-spec] current-context]
+  (if (= (first operands) "*")
+    (select-all current-context)
+    (let [obj (:value current-context)
+          key (keyword (first operands))]
+      (m/with-context key (key obj) current-context))))
 
 (defn- obj-vals [current-context]
   (let [obj (:value current-context)]
@@ -57,12 +61,12 @@
   (cond
    (= :index (first sel-expr)) (let [obj (:value (:current context))
                                      sel (nth sel-expr 1)]
-                                 (if (sequential? obj)
-                                   (if (= "*" sel)
-                                     (map-indexed (fn [idx child-obj] (m/with-context idx child-obj (:current context))) obj)
+                                 (if (= "*" sel)
+                                   (select-all (:current context))
+                                   (if (sequential? obj)
                                      (let [index (Integer/parseInt sel)]
-                                       (m/with-context index (nth obj index) (:current context))))
-                                   (throw (Exception. "object must be an array."))))
+                                       (m/with-context index (nth obj index) (:current context)))
+                                     (throw (Exception. "object must be an array.")))))
    (= :filter (first sel-expr)) (keep-indexed (fn [i e] (if (eval-expr (nth sel-expr 1) (assoc context :current (m/root e)))
                                                           (m/with-context i e (:current context))))
                                               (:value (:current context)))))
