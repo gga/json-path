@@ -42,12 +42,13 @@
 (facts
   (walk-selector [:index "1"] {:current (m/root ["foo", "bar", "baz"])}) => (m/create "bar" [1])
   (walk-selector [:index "*"] {:current (m/root [:a :b])}) => (list (m/create :a [0]) (m/create :b [1]))
+  (walk-selector [:index "*"] {:current (m/root {:foo "bar"})}) => (list (m/create "bar" [:foo]))
+  (walk-selector [:index "*"] {:current (m/root 1)}) => '()
   (walk-selector [:filter [:eq [:path [[:current] [:child] [:key "bar"]]] [:val "baz"]]]
                  {:current (m/root [{:bar "wrong"} {:bar "baz"}])}) => (list (m/create {:bar "baz"} [1])))
 
 (fact "selecting places constraints on the shape of the object being selected from"
-  (walk-selector [:index "1"] {:current (m/root {:foo "bar"})}) => (throws Exception)
-  (walk-selector [:index "*"] {:current (m/root {:foo "bar"})}) => (throws Exception))
+  (walk-selector [:index "1"] {:current (m/root {:foo "bar"})}) => (throws Exception))
 
 (facts
   (walk [:path [[:root]]] {:root (m/root ...json...)}) => (m/create ...json... [])
