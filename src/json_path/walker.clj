@@ -53,10 +53,9 @@
                     (map (fn [[k v]] [v [k]])))
     :else '()))
 
-(defn obj-aggregator [obj]
-  (let [obj-vals (obj-vals obj)
-        children (map-selection obj-aggregator obj-vals)]
-    (concat obj-vals children)))
+(defn all-children [obj]
+  (let [children (map-selection all-children (obj-vals obj))]
+    (concat (list [obj []]) children)))
 
 (defn walk-path [[next & parts] context]
   (cond
@@ -64,11 +63,10 @@
    (= [:root] next) (walk-path parts (assoc context :current (:root context)))
    (= [:child] next) (walk-path parts context)
    (= [:current] next) (walk-path parts context)
-   (= [:all-children] next) (let [all-children (cons [(:current context) []]
-                                                     (obj-aggregator (:current context)))]
-                              (->> all-children
-                                   (map-selection #(walk-path parts (assoc context :current %)))
-                                   (filter #(not (empty? (first %))))))
+   (= [:all-children] next) (->> (:current context)
+                                 all-children
+                                 (map-selection #(walk-path parts (assoc context :current %)))
+                                 (filter #(not (empty? (first %)))))
    (= :key (first next)) (map-selection #(walk-path parts (assoc context :current %)) (select-by next context))))
 
 (defn walk-selector [sel-expr context]

@@ -75,8 +75,8 @@
                                                {:baz {:world "bar"}}]
                                               []]
                                              [{:hello {:world "foo"}} [0]]
-                                             [{:baz {:world "bar"}} [1]]
                                              [{:world "foo"} [0 :hello]]
+                                             [{:baz {:world "bar"}} [1]]
                                              [{:world "bar"} [1 :baz]])
   (walk [:path [[:all-children]]]
         {:current "scalar"}) => '(["scalar" []])
