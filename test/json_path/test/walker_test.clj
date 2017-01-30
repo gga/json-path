@@ -108,7 +108,7 @@
                       {:bar "baz" :hello "world"}]}}) => '(["world" [:foo 1 :hello]]))
 
 (facts "walking a nil object should be safe"
-  (walk [:path [[:root]]] nil) => [nil []]
-  (walk [:path [[:root] [:child] [:key "foo"]]] {:bar "baz"}) => [nil [:foo]]
+  (walk [:path [[:root]]] {:root nil}) => [nil []]
+  (walk [:path [[:root] [:child] [:key "foo"]]] {:root {:bar "baz"}}) => [nil [:foo]]
   (walk [:path [[:root] [:child] [:key "foo"] [:child] [:key "bar"]]]
-           {:foo {:baz "hello"}}) => [nil [:foo :bar]])
+           {:root {:foo {:baz "hello"}}}) => [nil [:foo :bar]])
