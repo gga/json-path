@@ -2,17 +2,12 @@
 
 (defrecord Match [path value])
 
-(defn value [match]
-  (:value match))
+(defn root [value]
+  (->Match [] value))
 
-(defn- path [match]
-  (:path match))
-
-(defn match
-  ([value] (->Match [] value))
-  ([key value] (->Match [key] value))
-  ([key value context] (->Match (vec (concat (path context) [key]))
+(defn with-context
+  ([key value context] (->Match (vec (concat (:path context) [key]))
                                 value)))
 
-(defn create-match [value path]
+(defn create [value path]
   (->Match path value))

@@ -11,7 +11,7 @@
     (cond
      (contains? ops expr-type) (eval-eq-expr (expr-type ops) context operands)
      (= expr-type :val) (first operands)
-     (= expr-type :path) (m/value (walk expr context)))))
+     (= expr-type :path) (:value (walk expr context)))))
 
 (defn map# [func obj]
   (if (seq? obj)
@@ -19,24 +19,24 @@
     (func obj)))
 
 (defn select-by [[opcode & operands :as obj-spec] current-context]
-  (let [obj (m/value current-context)]
+  (let [obj (:value current-context)]
     (cond
-      (sequential? obj) (->> (map-indexed (fn [idx child-obj] (m/match idx child-obj current-context)) obj)
+      (sequential? obj) (->> (map-indexed (fn [idx child-obj] (m/with-context idx child-obj current-context)) obj)
                              (map #(select-by obj-spec %))
                              flatten
-                             (remove #(empty? (m/value %))))
+                             (remove #(empty? (:value %))))
       :else (cond
-              (= (first operands) "*") (map (fn [[k v]] (m/match k v current-context)) obj)
+              (= (first operands) "*") (map (fn [[k v]] (m/with-context k v current-context)) obj)
               :else (let [key (keyword (first operands))]
-                      (m/match key (key obj) current-context))))))
+                      (m/with-context key (key obj) current-context))))))
 
 (defn- obj-vals [current-context]
-  (let [obj (m/value current-context)]
+  (let [obj (:value current-context)]
     (cond
-      (seq? obj) (map-indexed (fn [idx child-obj] (m/match idx child-obj current-context)) obj)
+      (seq? obj) (map-indexed (fn [idx child-obj] (m/with-context idx child-obj current-context)) obj)
       (map? obj) (->> obj
                       (filter (fn [[k v]] (or (map? v) (sequential? v))))
-                      (map (fn [[k v]] (m/match k v current-context))))
+                      (map (fn [[k v]] (m/with-context k v current-context))))
       :else '())))
 
 (defn- all-children [current-context]
@@ -53,22 +53,22 @@
                                  all-children
                                  (map #(walk-path parts (assoc context :current %)))
                                  flatten
-                                 (remove #(empty? (m/value %))))
+                                 (remove #(empty? (:value %))))
    (= :key (first next)) (map# #(walk-path parts (assoc context :current %)) (select-by next (:current context)))))
 
 (defn walk-selector [sel-expr context]
   (cond
-    (= :index (first sel-expr)) (let [obj (m/value (:current context))
-                                      sel (nth sel-expr 1)]
-                                  (if (sequential? obj)
-                                    (if (= "*" sel)
-                                      (map-indexed (fn [idx child-obj] (m/match idx child-obj (:current context))) obj)
-                                      (let [index (Integer/parseInt sel)]
-                                        (m/match index (nth obj index) (:current context))))
-                                    (throw (Exception. "object must be an array."))))
-   (= :filter (first sel-expr)) (keep-indexed (fn [i e] (if (eval-expr (nth sel-expr 1) (assoc context :current (m/match e)))
-                                                          (m/match i e (:current context))))
-                                              (m/value (:current context)))))
+   (= :index (first sel-expr)) (let [obj (:value (:current context))
+                                     sel (nth sel-expr 1)]
+                                 (if (sequential? obj)
+                                   (if (= "*" sel)
+                                     (map-indexed (fn [idx child-obj] (m/with-context idx child-obj (:current context))) obj)
+                                     (let [index (Integer/parseInt sel)]
+                                       (m/with-context index (nth obj index) (:current context))))
+                                   (throw (Exception. "object must be an array."))))
+   (= :filter (first sel-expr)) (keep-indexed (fn [i e] (if (eval-expr (nth sel-expr 1) (assoc context :current (m/root e)))
+                                                          (m/with-context i e (:current context))))
+                                              (:value (:current context)))))
 
 (defn walk [[opcode operand continuation] context]
   (let [down-obj (cond
