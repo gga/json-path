@@ -10,3 +10,6 @@
   ([value] [value []])
   ([key value] [value [key]])
   ([key value context] [value (vec (concat (path context) [key]))]))
+
+(defn create-match [value path]
+  [value path])
