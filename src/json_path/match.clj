@@ -1,15 +1,18 @@
 (ns json-path.match)
 
+(defrecord Match [path value])
+
 (defn value [match]
-  (first match))
+  (:value match))
 
 (defn- path [match]
-  (last match))
+  (:path match))
 
 (defn match
-  ([value] [value []])
-  ([key value] [value [key]])
-  ([key value context] [value (vec (concat (path context) [key]))]))
+  ([value] (->Match [] value))
+  ([key value] (->Match [key] value))
+  ([key value context] (->Match (vec (concat (path context) [key]))
+                                value)))
 
 (defn create-match [value path]
-  [value path])
+  (->Match path value))
