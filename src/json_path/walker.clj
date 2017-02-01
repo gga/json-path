@@ -15,26 +15,16 @@
 
 (defn map# [func obj]
   (if (seq? obj)
-    (map func obj)
+    (flatten (map func obj))
     (func obj)))
-
-(defn- join-matches [selections]
-  (if (seq? selections)
-    (->> selections
-         (reduce (fn [col item] (if (seq? item)
-                                  (concat col item)
-                                  (conj col item)))
-                 [])
-         seq)
-    selections))
 
 (defn select-by [[opcode & operands :as obj-spec] current-context]
   (let [obj (m/value current-context)]
     (cond
       (sequential? obj) (->> (map-indexed (fn [idx child-obj] (m/match idx child-obj current-context)) obj)
                              (map #(select-by obj-spec %))
-                             join-matches
-                             (filter #(not (empty? (m/value %)))))
+                             flatten
+                             (remove #(empty? (m/value %))))
       :else (cond
               (= (first operands) "*") (map (fn [[k v]] (m/match k v current-context)) obj)
               :else (let [key (keyword (first operands))]
@@ -61,10 +51,10 @@
    (= [:current] next) (walk-path parts context)
    (= [:all-children] next) (->> (:current context)
                                  all-children
-                                 (map# #(walk-path parts (assoc context :current %)))
-                                 join-matches
-                                 (filter #(not (empty? (m/value %)))))
-   (= :key (first next)) (join-matches (map# #(walk-path parts (assoc context :current %)) (select-by next (:current context))))))
+                                 (map #(walk-path parts (assoc context :current %)))
+                                 flatten
+                                 (remove #(empty? (m/value %))))
+   (= :key (first next)) (map# #(walk-path parts (assoc context :current %)) (select-by next (:current context)))))
 
 (defn walk-selector [sel-expr context]
   (cond
