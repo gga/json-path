@@ -11,7 +11,7 @@
     (cond
      (contains? ops expr-type) (eval-eq-expr (expr-type ops) context operands)
      (= expr-type :val) (first operands)
-     (= expr-type :path) (first (walk expr context)))))
+     (= expr-type :path) (m/value (walk expr context)))))
 
 (defn map# [func obj]
   (if (seq? obj)
@@ -32,9 +32,9 @@
   (let [obj (m/value current-context)]
     (cond
       (sequential? obj) (->> (map-indexed (fn [idx child-obj] (m/match idx child-obj current-context)) obj)
-                                  (map #(select-by obj-spec %))
-                                  (filter #(not (empty? (m/value %))))
-                                  join-matches)
+                             (map #(select-by obj-spec %))
+                             join-matches
+                             (filter #(not (empty? (m/value %)))))
       :else (cond
               (= (first operands) "*") (map (fn [[k v]] (m/match k v current-context)) obj)
               :else (let [key (keyword (first operands))]
@@ -63,7 +63,7 @@
                                  all-children
                                  (map# #(walk-path parts (assoc context :current %)))
                                  join-matches
-                                 (filter #(not (empty? (first %)))))
+                                 (filter #(not (empty? (m/value %)))))
    (= :key (first next)) (join-matches (map# #(walk-path parts (assoc context :current %)) (select-by next (:current context))))))
 
 (defn walk-selector [sel-expr context]

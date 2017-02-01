@@ -22,7 +22,7 @@
   (select-by [:key "hello"] (m/match [{:blah "foo"} {:hello "bar"}])) => (list (m/create-match "bar" [1 :hello]))
   (select-by [:key "*"] (m/match {:hello "world"})) => (list (m/create-match "world" [:hello]))
   (sort-by first (select-by [:key "*"] (m/match {:hello "world" :foo "bar"}))) => (list (m/create-match "bar" [:foo]) (m/create-match "world" [:hello]))
-  (sort-by first (select-by [:key "*"] (m/match [{:hello "world"} {:foo "bar"}]))) => (list (m/create-match "bar" [1 :foo]) (m/create-match "world" [0 :hello])))
+  (sort-by first (select-by [:key "*"] (m/match [{:hello "world"} {:foo "bar"}]))) => (list (m/create-match "world" [0 :hello]) (m/create-match "bar" [1 :foo])))
 
 (facts
   (walk-path [[:root]] {:root (m/match ...root...), :current  (m/match ...obj...)}) => (m/create-match ...root... [])

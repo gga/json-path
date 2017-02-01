@@ -7,4 +7,4 @@
   (walker/walk (parser/parse-path path) {:root (m/match object)}))
 
 (defn at-path [path object]
-  (walker/map# first (query path object)))
+  (walker/map# m/value (query path object)))
