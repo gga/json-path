@@ -13,103 +13,105 @@
   (eval-expr [:lt-eq [:val 10] [:val 10]] {}) => truthy
   (eval-expr [:gt [:val 10] [:val 9]] {}) => truthy
   (eval-expr [:gt-eq [:val 10] [:val 10]] {}) => truthy
-  (eval-expr [:path [[:key "foo"]]] {:current (m/match {:foo "bar"})}) => "bar"
-  (eval-expr [:eq [:path [[:key "foo"]]] [:val "bar"]] {:current (m/match {:foo "bar"})}) => truthy)
+  (eval-expr [:path [[:key "foo"]]] {:current (m/root {:foo "bar"})}) => "bar"
+  (eval-expr [:eq [:path [[:key "foo"]]] [:val "bar"]] {:current (m/root {:foo "bar"})}) => truthy)
 
 (facts
-  (select-by [:key "hello"] (m/match {:hello "world"})) => (m/create-match "world" [:hello])
-  (select-by [:key "hello"] (m/match [{:hello "foo"} {:hello "bar"}])) => (list (m/create-match "foo" [0 :hello]) (m/create-match "bar" [1 :hello]))
-  (select-by [:key "hello"] (m/match [{:blah "foo"} {:hello "bar"}])) => (list (m/create-match "bar" [1 :hello]))
-  (select-by [:key "*"] (m/match {:hello "world"})) => (list (m/create-match "world" [:hello]))
-  (sort-by first (select-by [:key "*"] (m/match {:hello "world" :foo "bar"}))) => (list (m/create-match "bar" [:foo]) (m/create-match "world" [:hello]))
-  (sort-by first (select-by [:key "*"] (m/match [{:hello "world"} {:foo "bar"}]))) => (list (m/create-match "world" [0 :hello]) (m/create-match "bar" [1 :foo])))
+  (select-by [:key "hello"] (m/root {:hello "world"})) => (m/create "world" [:hello])
+  (select-by [:key "hello"] (m/root [{:hello "foo"} {:hello "bar"}])) => (list (m/create "foo" [0 :hello]) (m/create "bar" [1 :hello]))
+  (select-by [:key "hello"] (m/root [{:blah "foo"} {:hello "bar"}])) => (list (m/create "bar" [1 :hello]))
+  (select-by [:key "*"] (m/root {:hello "world"})) => (list (m/create "world" [:hello]))
+  (sort-by first (select-by [:key "*"] (m/root {:hello "world" :foo "bar"}))) => (list (m/create "bar" [:foo]) (m/create "world" [:hello]))
+  (sort-by first (select-by [:key "*"] (m/root [{:hello "world"} {:foo "bar"}]))) => (list (m/create "world" [0 :hello]) (m/create "bar" [1 :foo])))
 
 (facts
-  (walk-path [[:root]] {:root (m/match ...root...), :current  (m/match ...obj...)}) => (m/create-match ...root... [])
-  (walk-path [[:root] [:child] [:key "foo"]] {:root (m/match {:foo "bar"})}) => (m/create-match "bar" [:foo])
-  (walk-path [[:key "foo"]] {:current (m/match [{:foo "bar"} {:foo "baz"} {:foo "qux"}])}) => (list (m/create-match "bar" [0 :foo]) (m/create-match "baz" [1 :foo]) (m/create-match "qux" [2 :foo]))
-  (walk-path [[:all-children]] {:current (m/match {:foo "bar" :baz {:qux "zoo"}})}) => (list (m/create-match {:foo "bar" :baz {:qux "zoo"}} [])
-                                                                                             (m/create-match {:qux "zoo"} [:baz]))
+  (walk-path [[:root]] {:root (m/root ...root...), :current  (m/root ...obj...)}) => (m/create ...root... [])
+  (walk-path [[:root] [:child] [:key "foo"]] {:root (m/root {:foo "bar"})}) => (m/create "bar" [:foo])
+  (walk-path [[:key "foo"]] {:current (m/root [{:foo "bar"} {:foo "baz"} {:foo "qux"}])}) => (list (m/create "bar" [0 :foo])
+                                                                                                    (m/create "baz" [1 :foo])
+                                                                                                    (m/create "qux" [2 :foo]))
+  (walk-path [[:all-children]] {:current (m/root {:foo "bar" :baz {:qux "zoo"}})}) => (list (m/create {:foo "bar" :baz {:qux "zoo"}} [])
+                                                                                             (m/create {:qux "zoo"} [:baz]))
   (distinct (walk-path [[:all-children] [:key "bar"]] ;; distinct works around dups, mentioned in https://github.com/gga/json-path/pull/6
-                       {:current (m/match '([{:bar "hello"}]))})) => (list (m/create-match "hello" [0 0 :bar]))
+                       {:current (m/root '([{:bar "hello"}]))})) => (list (m/create "hello" [0 0 :bar]))
   (walk-path [[:all-children] [:key "bar"]]
-             {:current (m/match {:foo [{:bar "wrong"}
-                                       {:bar "baz"}]})}) => (list (m/create-match "wrong" [:foo 0 :bar])
-                                                                  (m/create-match "baz" [:foo 1 :bar]))
+             {:current (m/root {:foo [{:bar "wrong"}
+                                       {:bar "baz"}]})}) => (list (m/create "wrong" [:foo 0 :bar])
+                                                                  (m/create "baz" [:foo 1 :bar]))
   (walk-path [[:all-children] [:key "foo"]]
-             {:current (m/match {:foo [{:foo "foo"}]})}) => (list (m/create-match [{:foo "foo"}] [:foo])
-                                                                  (m/create-match "foo" [:foo 0 :foo])))
+             {:current (m/root {:foo [{:foo "foo"}]})}) => (list (m/create [{:foo "foo"}] [:foo])
+                                                                  (m/create "foo" [:foo 0 :foo])))
 
 (facts
-  (walk-selector [:index "1"] {:current (m/match ["foo", "bar", "baz"])}) => (m/create-match "bar" [1])
-  (walk-selector [:index "*"] {:current (m/match [:a :b])}) => (list (m/create-match :a [0]) (m/create-match :b [1]))
+  (walk-selector [:index "1"] {:current (m/root ["foo", "bar", "baz"])}) => (m/create "bar" [1])
+  (walk-selector [:index "*"] {:current (m/root [:a :b])}) => (list (m/create :a [0]) (m/create :b [1]))
   (walk-selector [:filter [:eq [:path [[:current] [:child] [:key "bar"]]] [:val "baz"]]]
-                 {:current (m/match [{:bar "wrong"} {:bar "baz"}])}) => (list (m/create-match {:bar "baz"} [1])))
+                 {:current (m/root [{:bar "wrong"} {:bar "baz"}])}) => (list (m/create {:bar "baz"} [1])))
 
 (fact "selecting places constraints on the shape of the object being selected from"
-  (walk-selector [:index "1"] {:current (m/match {:foo "bar"})}) => (throws Exception)
-  (walk-selector [:index "*"] {:current (m/match {:foo "bar"})}) => (throws Exception))
+  (walk-selector [:index "1"] {:current (m/root {:foo "bar"})}) => (throws Exception)
+  (walk-selector [:index "*"] {:current (m/root {:foo "bar"})}) => (throws Exception))
 
 (facts
-  (walk [:path [[:root]]] {:root (m/match ...json...)}) => (m/create-match ...json... [])
-  (walk [:path [[:child]]] {:current (m/match ...json...)}) => (m/create-match ...json... [])
-  (walk [:path [[:current]]] {:current (m/match ...json...)}) => (m/create-match ...json... [])
-  (walk [:path [[:key "foo"]]] {:current (m/match {:foo "bar"})}) => (m/create-match "bar" [:foo])
+  (walk [:path [[:root]]] {:root (m/root ...json...)}) => (m/create ...json... [])
+  (walk [:path [[:child]]] {:current (m/root ...json...)}) => (m/create ...json... [])
+  (walk [:path [[:current]]] {:current (m/root ...json...)}) => (m/create ...json... [])
+  (walk [:path [[:key "foo"]]] {:current (m/root {:foo "bar"})}) => (m/create "bar" [:foo])
   (walk [:path [[:all-children]]]
         {:current
-         (m/match {:hello {:world "foo"},
+         (m/root {:hello {:world "foo"},
                    :baz {:world "bar",
-                         :quuz {:world "zux"}}})}) => (list (m/create-match {:hello {:world "foo"},
-                                                                             :baz {:world "bar", :quuz {:world "zux"}}}
-                                                                            [])
-                                                            (m/create-match {:world "foo"}
-                                                                            [:hello])
-                                                            (m/create-match {:world "bar",
-                                                                             :quuz {:world "zux"}}
-                                                                            [:baz])
-                                                            (m/create-match {:world "zux"}
-                                                                            [:baz :quuz]))
+                         :quuz {:world "zux"}}})}) => (list (m/create {:hello {:world "foo"},
+                                                                       :baz {:world "bar", :quuz {:world "zux"}}}
+                                                                      [])
+                                                            (m/create {:world "foo"}
+                                                                      [:hello])
+                                                            (m/create {:world "bar",
+                                                                       :quuz {:world "zux"}}
+                                                                      [:baz])
+                                                            (m/create {:world "zux"}
+                                                                      [:baz :quuz]))
   (walk [:path [[:all-children]]]
         {:current
-         (m/match (list {:hello {:world "foo"}}
-                        {:baz {:world "bar"}}))}) => (list (m/create-match [{:hello {:world "foo"}}
-                                                                            {:baz {:world "bar"}}]
-                                                                           [])
-                                                           (m/create-match {:hello {:world "foo"}} [0])
-                                                           (m/create-match {:world "foo"} [0 :hello])
-                                                           (m/create-match {:baz {:world "bar"}} [1])
-                                                           (m/create-match {:world "bar"} [1 :baz]))
+         (m/root (list {:hello {:world "foo"}}
+                        {:baz {:world "bar"}}))}) => (list (m/create [{:hello {:world "foo"}}
+                                                                      {:baz {:world "bar"}}]
+                                                                     [])
+                                                           (m/create {:hello {:world "foo"}} [0])
+                                                           (m/create {:world "foo"} [0 :hello])
+                                                           (m/create {:baz {:world "bar"}} [1])
+                                                           (m/create {:world "bar"} [1 :baz]))
   (walk [:path [[:all-children]]]
-        {:current (m/match "scalar")}) => (list (m/create-match "scalar" []))
+        {:current (m/root "scalar")}) => (list (m/create "scalar" []))
   (walk [:path [[:all-children] [:key "world"]]]
-        {:current (m/match {:hello {:world "foo"},
+        {:current (m/root {:hello {:world "foo"},
                             :baz   {:world "bar",
-                                    :quuz {:world "zux"}}})}) => (list (m/create-match "foo" [:hello :world])
-                                                                       (m/create-match "bar" [:baz :world])
-                                                                       (m/create-match "zux" [:baz :quuz :world]))
-  (walk [:selector [:index "1"]] {:current (m/match ["foo", "bar", "baz"])}) => (m/create-match "bar" [1])
-  (walk [:selector [:index "*"]] {:current (m/match [:a :b])}) => (list (m/create-match :a [0]) (m/create-match :b [1]))
+                                    :quuz {:world "zux"}}})}) => (list (m/create "foo" [:hello :world])
+                                                                       (m/create "bar" [:baz :world])
+                                                                       (m/create "zux" [:baz :quuz :world]))
+  (walk [:selector [:index "1"]] {:current (m/root ["foo", "bar", "baz"])}) => (m/create "bar" [1])
+  (walk [:selector [:index "*"]] {:current (m/root [:a :b])}) => (list (m/create :a [0]) (m/create :b [1]))
   (walk [:selector [:index "*"]
          [:path [[:child] [:key "foo"]]]]
         {:current
-         (m/match [{:foo 1} {:foo 2}])}) => (list (m/create-match 1 [0 :foo]) (m/create-match 2 [1 :foo]))
+         (m/root [{:foo 1} {:foo 2}])}) => (list (m/create 1 [0 :foo]) (m/create 2 [1 :foo]))
   (walk [:selector [:filter [:eq
                              [:path [[:current]
                                      [:child]
                                      [:key "bar"]]]
                              [:val "baz"]]]]
-        {:current (m/match [{:bar "wrong"} {:bar "baz"}])}) => (list (m/create-match {:bar "baz"} [1]))
+        {:current (m/root [{:bar "wrong"} {:bar "baz"}])}) => (list (m/create {:bar "baz"} [1]))
   (walk [:path [[:root] [:child] [:key "foo"]]
          [:selector [:filter [:eq [:path [[:current]
                                           [:child]
                                           [:key "bar"]]]
                               [:val "baz"]]]
           [:path [[:child] [:key "hello"]]]]]
-        {:root (m/match {:foo [{:bar "wrong" :hello "goodbye"}
-                               {:bar "baz" :hello "world"}]})}) => (list (m/create-match "world" [:foo 1 :hello])))
+        {:root (m/root {:foo [{:bar "wrong" :hello "goodbye"}
+                               {:bar "baz" :hello "world"}]})}) => (list (m/create "world" [:foo 1 :hello])))
 
 (facts "walking a nil object should be safe"
-  (walk [:path [[:root]]] {:root (m/match nil)}) => (m/create-match nil [])
-  (walk [:path [[:root] [:child] [:key "foo"]]] {:root (m/match {:bar "baz"})}) => (m/create-match nil [:foo])
+  (walk [:path [[:root]]] {:root (m/root nil)}) => (m/create nil [])
+  (walk [:path [[:root] [:child] [:key "foo"]]] {:root (m/root {:bar "baz"})}) => (m/create nil [:foo])
   (walk [:path [[:root] [:child] [:key "foo"] [:child] [:key "bar"]]]
-        {:root (m/match {:foo {:baz "hello"}})}) => (m/create-match nil [:foo :bar]))
+        {:root (m/root {:foo {:baz "hello"}})}) => (m/create nil [:foo :bar]))
