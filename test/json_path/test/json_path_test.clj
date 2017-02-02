@@ -1,5 +1,4 @@
 (ns json-path.test.json-path-test
-  [:require [json-path.match :as m]]
   [:use [json-path]
    [midje.sweet]])
 
@@ -24,13 +23,24 @@
                           {:id 45, :text "hello"}]}) => ["hello"])
 
 (facts
- (query "$..world" {:baz {:world "bar",
-                          :quuz {:world "zux"}}})  => (list (m/create "bar" [:baz :world]) (m/create "zux" [:baz :quuz :world]))
- (query "$.foo[*]" {:foo ["a", "b", "c"]}) => (list (m/create "a" [:foo 0])
-                                                    (m/create "b" [:foo 1])
-                                                    (m/create "c" [:foo 2]))
- (query "$.hello" {:hello "world"}) => (m/create "world" [:hello])
- (query "$" {:hello "world"}) => (m/create {:hello "world"} [])
- (query "$.foo[?(@.bar=\"baz\")].hello"
-        {:foo [{:bar "wrong" :hello "goodbye"}
-               {:bar "baz" :hello "world"}]}) => (list (m/create "world" [:foo 1 :hello])))
+  (-> (query "$.hello"
+             {:hello "world"})
+      :path) => [:hello]
+  (-> (query "$"
+             {:hello "world"})
+      :path) => []
+  (->> (query "$..world" {:baz {:world "bar",
+                                :quuz {:world "zux"}}})
+       (map :value))  => '("bar" "zux")
+  (->> (query "$..world" {:baz {:world "bar",
+                                :quuz {:world "zux"}}})
+       (map :path))  => '([:baz :world] [:baz :quuz :world])
+  (->> (query "$.foo[*]" {:foo ["a", "b", "c"]})
+       (map :path)) => '([:foo 0] [:foo 1] [:foo 2])
+  (-> (query "$.hello"
+             {:hello "world"})
+      :value) => "world"
+  (->> (query "$.foo[?(@.bar=\"baz\")].hello"
+              {:foo [{:bar "wrong" :hello "goodbye"}
+                     {:bar "baz" :hello "world"}]})
+       (map :path)) => '([:foo 1 :hello]))
