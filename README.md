@@ -49,11 +49,16 @@ that maps contains keywords for the child objects.
 
     (json-path/at-path "$.foo" {:foo {:bar "Hello, world!"}})
     ; => {:bar "Hello, world!"}
-    
+
+    (->> (json-path/query "$..bar" {:foo {:bar "Hello"}})
+         (map :path))
+    ; => ([:foo :bar])
+
 ## Contributors
 
 * [Giles Alexander](https://github.com/gga)
 * [Matthew Gertner](https://github.com/matthewgertner)
+* [Christoph Burgmer](https://github.com/cburgmer)
 
 ## License
 
