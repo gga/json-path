@@ -14,6 +14,8 @@
   (eval-expr [:gt [:val 10] [:val 9]] {}) => truthy
   (eval-expr [:gt-eq [:val 10] [:val 10]] {}) => truthy
   (eval-expr [:path [[:key "foo"]]] {:current (m/root {:foo "bar"})}) => "bar"
+  (eval-expr [:some [:path [[:current] [:child] [:key "foo"]]]] {:current (m/root {:foo "bar"})}) => truthy
+  (eval-expr [:some [:path [[:current] [:child] [:key "foo"]]]] {:current (m/root {:foo nil})}) => falsey
   (eval-expr [:eq [:path [[:key "foo"]]] [:val "bar"]] {:current (m/root {:foo "bar"})}) => truthy)
 
 (facts
@@ -110,7 +112,12 @@
                               [:val "baz"]]]
           [:path [[:child] [:key "hello"]]]]]
         {:root (m/root {:foo [{:bar "wrong" :hello "goodbye"}
-                               {:bar "baz" :hello "world"}]})}) => (list (m/create "world" [:foo 1 :hello])))
+                              {:bar "baz" :hello "world"}]})}) => (list (m/create "world" [:foo 1 :hello]))
+  (walk [:path [[:root]]
+         [:selector [:filter [:some [:path [[:current]
+                                            [:child]
+                                            [:key "bar"]]]]]]]
+        {:root (m/root {:hello "world" :foo {:bar "baz"}})}) => (list (m/create {:bar "baz"} [:foo])))
 
 (facts "walking a nil object should be safe"
   (walk [:path [[:root]]] {:root (m/root nil)}) => (m/create nil [])

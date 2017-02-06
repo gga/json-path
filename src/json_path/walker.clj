@@ -10,6 +10,7 @@
   (let [ops {:eq =, :neq not=, :lt <, :lt-eq <=, :gt >, :gt-eq >=}]
     (cond
      (contains? ops expr-type) (eval-eq-expr (expr-type ops) context operands)
+     (= expr-type :contains) (some? (:value (walk (first operands) context)))
      (= expr-type :val) (first operands)
      (= expr-type :path) (:value (walk expr context)))))
 

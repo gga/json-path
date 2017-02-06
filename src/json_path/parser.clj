@@ -11,7 +11,9 @@
         lhs (take-while #(not (supported-ops %)) remaining)
         op (first (drop-while #(not (supported-ops %)) remaining))
         rhs (rest (drop-while #(not (supported-ops %)) remaining))]
-    [(ops op) (parse lhs) (parse rhs)]))
+    (if (nil? op)
+      [:some (parse lhs)]
+      [(ops op) (parse lhs) (parse rhs)])))
 
 (defn parse-indexer [remaining]
   (let [next (first remaining)]
