@@ -20,7 +20,7 @@
   (select-by [:key "hello"] (m/root {:hello "world"})) => (m/create "world" [:hello])
   (select-by [:key "hello"] {:current [{:hello "foo"} {:hello "bar"}]}) => (m/create nil [:hello])
   (select-by [:key "*"] (m/root {:hello "world"})) => (list (m/create "world" [:hello]))
-  (select-by [:key "*"] (m/root {:hello "world" :foo "bar"})) => (list (m/create "bar" [:foo]) (m/create "world" [:hello]))
+  (select-by [:key "*"] (m/root {:hello "world" :foo "bar"})) => (list (m/create "world" [:hello]) (m/create "bar" [:foo]))
   (select-by [:key "*"] (m/root [{:hello "world"} {:foo "bar"}])) => (list (m/create {:hello "world"} [0]) (m/create {:foo "bar"} [1]))
   (select-by [:key "*"] {:current 1}) => '())
 
