@@ -67,9 +67,14 @@
                                      (let [index (Integer/parseInt sel)]
                                        (m/with-context index (nth obj index) (:current context)))
                                      (throw (Exception. "object must be an array.")))))
-   (= :filter (first sel-expr)) (keep-indexed (fn [i e] (if (eval-expr (nth sel-expr 1) (assoc context :current (m/root e)))
-                                                          (m/with-context i e (:current context))))
-                                              (:value (:current context)))))
+   (= :filter (first sel-expr)) (let [obj (:value (:current context))]
+                                  (if (map? obj)
+                                    (->> obj
+                                         (filter (fn [[key val]] (eval-expr (nth sel-expr 1) (assoc context :current (m/root val)))))
+                                         (map (fn [[key val]] (m/with-context key val (:current context)))))
+                                    (keep-indexed (fn [i e] (if (eval-expr (nth sel-expr 1) (assoc context :current (m/root e)))
+                                                              (m/with-context i e (:current context))))
+                                                  obj)))))
 
 (defn walk [[opcode operand continuation] context]
   (let [down-obj (cond
