@@ -47,6 +47,8 @@ operations like length should be added.
 Accepts standard Clojure data structures: maps and sequences. Assumes
 that maps contains keywords for the child objects.
 
+    (require 'json-path)
+
     (json-path/at-path "$.foo" {:foo {:bar "Hello, world!"}})
     ; => {:bar "Hello, world!"}
 
