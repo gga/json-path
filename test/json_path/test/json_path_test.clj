@@ -40,6 +40,9 @@
   (-> (query "$.hello"
              {:hello "world"})
       :value) => "world"
+  (-> (query "$.hello/world"
+              {:hello/world "foo"})
+      :value) => "foo"
   (->> (query "$.foo[?(@.bar=\"baz\")].hello"
               {:foo [{:bar "wrong" :hello "goodbye"}
                      {:bar "baz" :hello "world"}]})
