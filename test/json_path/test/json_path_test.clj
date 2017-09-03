@@ -43,6 +43,9 @@
   (-> (query "$.hello/world"
               {:hello/world "foo"})
       :value) => "foo"
+  (-> (query "$.hello/world.world/name"
+              {:hello/world {:world/name "earth"}})
+      :value) => "earth"
   (->> (query "$.foo[?(@.bar=\"baz\")].hello"
               {:foo [{:bar "wrong" :hello "goodbye"}
                      {:bar "baz" :hello "world"}]})
