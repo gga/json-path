@@ -1,3 +1,7 @@
+## 1.0.1
+### Added
+- Support for namespaced keywords (#11)
+
 ## 1.0.0
 ### Added
 - Filtering supported on map structures

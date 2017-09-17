@@ -61,6 +61,7 @@ that maps contains keywords for the child objects.
 * [Giles Alexander](https://github.com/gga)
 * [Matthew Gertner](https://github.com/matthewgertner)
 * [Christoph Burgmer](https://github.com/cburgmer)
+* [Trevor Hartman](https://github.com/devth)
 
 ## License
 
