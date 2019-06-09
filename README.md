@@ -21,6 +21,9 @@ elements are supported.
 
 See [`test/json_path/test/json_path_test.clj`][eg] for more examples.
 
+For a comparison to other implementations see the
+[json-path-comparison project][comp].
+
 ## Missing
 
 Notable features missing from the JsonPath spec are multiple array
@@ -71,3 +74,4 @@ Distributed under the MIT License.
 
 [jp]: http://goessner.net/articles/JsonPath/
 [eg]: https://github.com/gga/json-path/blob/master/test/json_path/test/json_path_test.clj
+[comp]: https://github.com/cburgmer/json-path-comparison/tree/master/comparison
