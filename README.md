@@ -74,4 +74,4 @@ Distributed under the MIT License.
 
 [jp]: http://goessner.net/articles/JsonPath/
 [eg]: https://github.com/gga/json-path/blob/master/test/json_path/test/json_path_test.clj
-[comp]: https://github.com/cburgmer/json-path-comparison/tree/master/comparison
+[comp]: https://cburgmer.github.io/json-path-comparison/
