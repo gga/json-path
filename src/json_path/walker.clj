@@ -55,7 +55,7 @@
                                  all-children
                                  (map #(walk-path parts (assoc context :current %)))
                                  flatten
-                                 (remove #(empty? (:value %))))
+                                 (remove #(nil? (:value %))))
    (= :key (first next)) (map# #(walk-path parts (assoc context :current %)) (select-by next (:current context)))))
 
 (defn walk-selector [sel-expr context]
