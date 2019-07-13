@@ -16,7 +16,7 @@
 
 (defn map# [func obj]
   (if (seq? obj)
-    (flatten (map func obj))
+    (map func obj)
     (func obj)))
 
 (defn- select-all [current-context]
