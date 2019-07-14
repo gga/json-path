@@ -16,23 +16,38 @@
                        (json-path/at-path selector document))))))
        doall))
 
+(defn- report-change [current {:keys [selector document result status consensus id]}]
+  (println
+   (format "Warning: implementation has changed for %s: %s (previous status %s)"
+           id selector status))
+  (when (or (nil? consensus)
+            (not= consensus current))
+    (when-not (= status "error")
+      (println (format "         was           %s" (pr-str current))))
+    (println (format "         now is        %s" (pr-str current))))
+  (when-not (nil? consensus)
+    (if (= consensus
+           current)
+      (println "         now matching consensus")
+      (println (format "         but should be %s" (pr-str consensus))))))
+
 ;; This section is for warning us if we are moving away from previously
 ;; recorded results which however are not backed by a consensus based
 ;; on https://github.com/cburgmer/json-path-comparison
 (deftest warning-on-changes-for-non-conforming-queries-based-on-consensus
   (->> (queries_from_suite "test/Clojure_json-path.yaml")
        (filter (fn [{status :status}] (not= status "pass")))
-       (map (fn [{:keys [selector document result status consensus id]}]
+       (map (fn [{:keys [selector document result status consensus id] :as query}]
               (testing id
-                (let [last-recorded result
-                      current (json-path/at-path selector document)]
-                  (when (not= last-recorded
-                              current)
-                    (if (= consensus
-                           current)
-                      (println (format "Result has changed for %s: %s now matching the consensus" id selector))
+                (try
+                  (let [current (json-path/at-path selector document)]
+                    (when (or (= "error" status)
+                              (not= result current))
+                      (report-change current query)))
+                  (catch Exception e
+                    (when (not= "error"
+                                status)
                       (do
-                        (println (format "Warning: result has changed for %s: %s (status %s)" id selector status))
-                        (println (format "         was    %s" (pr-str last-recorded)))
-                        (println (format "         now is %s" (pr-str current))))))))))
+                        (println (format "Warning: implementation has changed to error for %s: %s (status %s)" id selector status))
+                        (println (format "         was    %s" (pr-str result))))))))))
        doall))
