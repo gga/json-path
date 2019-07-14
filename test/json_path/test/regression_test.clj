@@ -40,7 +40,7 @@
        (map (fn [{:keys [selector document result status consensus id] :as query}]
               (testing id
                 (try
-                  (let [current (json-path/at-path selector document)]
+                  (let [current (doall (json-path/at-path selector document))]
                     (when (or (= "error" status)
                               (not= result current))
                       (report-change current query)))
