@@ -1,3 +1,10 @@
+## 2.0.0
+### Added
+- Support for negative array indexing (e.g. `-1`)
+
+### Changed
+- Correctly handle array values for wildcards and recursive descend (https://github.com/gga/json-path/issues/13)
+
 ## 1.0.1
 ### Added
 - Support for namespaced keywords (#11)

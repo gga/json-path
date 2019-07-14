@@ -1,4 +1,4 @@
-(defproject json-path "1.0.1"
+(defproject json-path "2.0.0"
   :description "JSON Path for Clojure data structures"
   :url "http://github.com/gga/json-path"
   :license "Eclipse Public License 1.0"
