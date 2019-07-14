@@ -43,6 +43,7 @@
 
 (facts
   (walk-selector [:index "1"] {:current (m/root ["foo", "bar", "baz"])}) => (m/create "bar" [1])
+  (walk-selector [:index "-1"] {:current (m/root ["foo", "bar", "baz"])}) => (m/create "baz" [-1])
   (walk-selector [:index "*"] {:current (m/root [:a :b])}) => (list (m/create :a [0]) (m/create :b [1]))
   (walk-selector [:index "*"] {:current (m/root {:foo "bar"})}) => (list (m/create "bar" [:foo]))
   (walk-selector [:index "*"] {:current (m/root 1)}) => '()

@@ -17,6 +17,7 @@
   (at-path "$.foo[*]" {:foo ["a", "b", "c"]}) => ["a", "b", "c"]
   (at-path "$[*]" {:foo 1 :bar [2 3]}) => [1 [2 3]]
   (at-path "$..*" {:foo 1 :bar [2 3]}) => [1 [2 3] 2 3]
+  (at-path "$[-2]" [1 2 3]) => 2
   (at-path "$.foo[?(@.bar=\"baz\")].hello"
            {:foo [{:bar "wrong" :hello "goodbye"}
                   {:bar "baz" :hello "world"}]}) => ["world"]

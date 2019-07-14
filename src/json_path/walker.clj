@@ -65,8 +65,11 @@
                                  (if (= "*" sel)
                                    (select-all (:current context))
                                    (if (sequential? obj)
-                                     (let [index (Integer/parseInt sel)]
-                                       (m/with-context index (nth obj index) (:current context)))
+                                     (let [index (Integer/parseInt sel)
+                                           effective-index (if (< index 0)
+                                                             (+ (count obj) index)
+                                                             index)]
+                                       (m/with-context index (nth obj effective-index) (:current context)))
                                      (throw (Exception. "object must be an array.")))))
    (= :filter (first sel-expr)) (let [obj (:value (:current context))
                                       children (if (map? obj)
