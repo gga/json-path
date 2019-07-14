@@ -10,10 +10,9 @@
 (deftest regression
   (->> (queries_from_suite "test/Clojure_json-path.yaml")
        (filter (fn [{status :status}] (= status "pass")))
-       (map (fn [{:keys [selector document result scalar id]}]
+       (map (fn [{:keys [selector document result id]}]
               (testing id
-                (is (= (cond-> result
-                         scalar first)
+                (is (= result
                        (json-path/at-path selector document))))))
        doall))
 
@@ -23,10 +22,9 @@
 (deftest warning-on-changes-for-non-conforming-queries-based-on-consensus
   (->> (queries_from_suite "test/Clojure_json-path.yaml")
        (filter (fn [{status :status}] (not= status "pass")))
-       (map (fn [{:keys [selector document result status scalar id]}]
+       (map (fn [{:keys [selector document result status id]}]
               (testing id
-                (let [last-recorded (cond-> result
-                                      scalar first)
+                (let [last-recorded result
                       current (json-path/at-path selector document)]
                   (when (not= last-recorded
                               current)
