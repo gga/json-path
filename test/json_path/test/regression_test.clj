@@ -22,13 +22,17 @@
 (deftest warning-on-changes-for-non-conforming-queries-based-on-consensus
   (->> (queries_from_suite "test/Clojure_json-path.yaml")
        (filter (fn [{status :status}] (not= status "pass")))
-       (map (fn [{:keys [selector document result status id]}]
+       (map (fn [{:keys [selector document result status consensus id]}]
               (testing id
                 (let [last-recorded result
                       current (json-path/at-path selector document)]
                   (when (not= last-recorded
                               current)
-                    (println (format "Warning: result has changed for %s: %s (status %s)" id selector status))
-                    (println (format "         was    %s" (pr-str last-recorded)))
-                    (println (format "         now is %s" (pr-str current))))))))
+                    (if (= consensus
+                           current)
+                      (println (format "Result has changed for %s: %s now matching the consensus" id selector))
+                      (do
+                        (println (format "Warning: result has changed for %s: %s (status %s)" id selector status))
+                        (println (format "         was    %s" (pr-str last-recorded)))
+                        (println (format "         now is %s" (pr-str current))))))))))
        doall))
