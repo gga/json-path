@@ -17,7 +17,9 @@
   (parse-expr '("\"" "bar" "\"" "<" "\"" "bar" "\"")) => [:lt [:val "bar"] [:val "bar"]]
   (parse-expr '("\"" "bar" "\"" "<=" "\"" "bar" "\"")) => [:lt-eq [:val "bar"] [:val "bar"]]
   (parse-expr '("\"" "bar" "\"" ">" "\"" "bar" "\"")) => [:gt [:val "bar"] [:val "bar"]]
-  (parse-expr '("\"" "bar" "\"" ">=" "\"" "bar" "\"")) => [:gt-eq [:val "bar"] [:val "bar"]])
+  (parse-expr '("\"" "bar" "\"" ">=" "\"" "bar" "\"")) => [:gt-eq [:val "bar"] [:val "bar"]]
+  (parse-expr '("\"" "bar" "\"" "=" "42")) => [:eq [:val "bar"] [:val 42]]
+  (parse-expr '("\"" "bar" "\"" "=" "3.1415")) => [:eq [:val "bar"] [:val 3.1415]])
 
 (fact
   (parse-indexer '("*")) => [:index "*"]
@@ -45,6 +47,12 @@
                                  [:selector [:filter [:some [:path [[:current]
                                                                     [:child]
                                                                     [:key "baz"]]]]]]]
+  (parse-path "$[?(@.bar<2)]") => [:path [[:root]]
+                                   [:selector [:filter [:lt
+                                                        [:path [[:current]
+                                                                [:child]
+                                                                [:key "bar"]]]
+                                                        [:val 2]]]]]
   (parse-path "$.foo[?(@.bar=\"baz\")].hello") => [:path [[:root] [:child] [:key "foo"]]
                                                    [:selector [:filter [:eq [:path [[:current]
                                                                                     [:child]

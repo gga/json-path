@@ -50,7 +50,9 @@
   (walk-selector [:filter [:eq [:path [[:current] [:child] [:key "bar"]]] [:val "baz"]]]
                  {:current (m/root [{:bar "wrong"} {:bar "baz"}])}) => (list (m/create {:bar "baz"} [1]))
   (walk-selector [:filter [:eq [:path [[:current] [:child] [:key "bar"]]] [:val "baz"]]]
-                 {:current (m/root {:one {:bar "wrong"} :other {:bar "baz"}})}) => (list (m/create {:bar "baz"} [:other])))
+                 {:current (m/root {:one {:bar "wrong"} :other {:bar "baz"}})}) => (list (m/create {:bar "baz"} [:other]))
+  (walk-selector [:filter [:gt [:path [[:current] [:child] [:key "bar"]]] [:val 42]]]
+                 {:current (m/root [{:bar 41} {:bar 43}])}) => (list (m/create {:bar 43} [1])))
 
 (fact "selecting places constraints on the shape of the object being selected from"
   (walk-selector [:index "1"] {:current (m/root {:foo "bar"})}) => (throws Exception))

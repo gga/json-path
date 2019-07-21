@@ -34,6 +34,8 @@
   (let [next (first remaining)]
     (cond
      (empty? remaining) []
+     (re-matches #"\d+" next) [:val (Integer/parseInt next)]
+     (re-matches #"\d+\.\d*" next) [:val (Double/parseDouble next)]
      (= "\"" next) [:val (apply str (extract-sub-tree "\"" "\"" remaining))]
      (= "[" next) (do
                     (let [idx (parse-indexer (extract-sub-tree "[" "]" remaining))
