@@ -17,11 +17,7 @@ queries:
     selector: $[-1]
     document: ["first", "second", "third"]
     result: "third"
-    status: pass
-  - id: array_index_out_of_bounds
-    selector: $[1]
-    document: ["one element"]
-    status: error
+    status: open
   - id: array_index_slice_end_out_of_bounds
     selector: $[1:10]
     document: ["first", "second", "third"]
@@ -34,6 +30,11 @@ queries:
     result: "third"
     status: fail
     consensus: ["third"]
+  - id: array_index_slice_negative_step
+    selector: $[::-2]
+    document: ["first", "second", "third", "forth", "fifth"]
+    result: "forth"
+    status: open
   - id: array_index_slice_no_start_no_end
     selector: $[:]
     document: ["first", "second"]
@@ -57,6 +58,11 @@ queries:
     result: "second"
     status: fail
     consensus: ["second", "third"]
+  - id: array_index_slice_start_end_negative_step
+    selector: $[3:0:-2]
+    document: ["first", "second", "third", "forth", "fifth"]
+    result: "forth"
+    status: open
   - id: array_index_slice_start_end_step
     selector: $[0:3:2]
     document: ["first", "second", "third", "forth", "fifth"]
@@ -78,8 +84,7 @@ queries:
     selector: $[0:4:2]
     document: ["first", "second", "third", "forth", "fifth"]
     result: "first"
-    status: fail
-    consensus: ["first", "third"]
+    status: open
   - id: array_index_slice_start_equals_end
     selector: $[0:0]
     document: ["first", "second"]
@@ -91,6 +96,12 @@ queries:
     result: "first"
     status: fail
     consensus: ["first"]
+  - id: array_index_slice_step
+    selector: $[::2]
+    document: ["first", "second", "third", "forth", "fifth"]
+    result: "third"
+    status: fail
+    consensus: ["first", "third", "fifth"]
   - id: array_index_union
     selector: $[0,1]
     document: ["first", "second", "third"]
@@ -106,7 +117,6 @@ queries:
     selector: $[?(@.key>=42)]
     document: [{"key": 0}, {"key": 42}, {"key": -1}, {"key": 41}, {"key": 43}, {"key": 42.0001}, {"key": 41.9999}, {"key": 100}, {"some": "value"}]
     status: error
-    consensus: [{"key": 42}, {"key": 43}, {"key": 42.0001}, {"key": 100}]
   - id: filter_less_than
     selector: $[?(@.key<42)]
     document: [{"key": 0}, {"key": 42}, {"key": -1}, {"key": 41}, {"key": 43}, {"key": 42.0001}, {"key": 41.9999}, {"key": 100}, {"some": "value"}]
@@ -134,7 +144,6 @@ queries:
     selector: $['key','another']
     document: {"key": "value", "another": "entry"}
     status: error
-    consensus: ["value", "entry"]
   - id: key_bracket_notation_with_double_quotes
     selector: $["key"]
     document: {"key": "value"}
@@ -176,21 +185,6 @@ queries:
     document: {"key": "value"}
     result: "value"
     status: pass
-  - id: key_dot_notation_not_found
-    selector: $.missing
-    document: {"key": "value"}
-    result: null
-    status: open
-  - id: key_dot_notation_on_array
-    selector: $.key
-    document: [0, 1]
-    result: null
-    status: open
-  - id: key_dot_notation_on_array_of_matching_object
-    selector: $.key
-    document: [{"key": "value"}]
-    result: null
-    status: open
   - id: key_dot_notation_on_array_value
     selector: $.key
     document: {"key": ["first", "second"]}
@@ -236,6 +230,10 @@ queries:
     document: {"key": "value", "another key": {"complex": ["a", 1]}}
     result: {"another key": {"complex": ["a", 1]}, "key": "value"}
     status: pass
+  - id: script_expression
+    selector: $[(@.length-1)]
+    document: ["first", "second", "third", "forth", "fifth"]
+    status: error
   - id: wildcard_bracket_notation_on_array
     selector: $[*]
     document: ["string", 42, {"key": "value"}, [0, 1]]
@@ -251,6 +249,12 @@ queries:
     document: {"some": "string", "int": 42, "object": {"key": "value"}, "array": [0, 1]}
     result: ["string", 42, {"key": "value"}, [0, 1]]
     status: pass
+  - id: wildcard_bracket_notation_with_key_on_nested_objects
+    selector: $[*].bar[*].baz
+    document: [{"bar": [{"baz": "hello"}]}]
+    result: [null]
+    status: fail
+    consensus: ["hello"]
   - id: wildcard_dot_notation_on_array
     selector: $.*
     document: ["string", 42, {"key": "value"}, [0, 1]]
