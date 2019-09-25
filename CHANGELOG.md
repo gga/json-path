@@ -1,3 +1,8 @@
+## 2.1.0
+### Added
+- Support for nested array selection (https://github.com/gga/json-path/pull/14)
+- Support for numbers in filters (e.g. `$[?(@.key>42)]`)
+
 ## 2.0.0
 ### Added
 - Support for negative array indexing (e.g. `-1`)
