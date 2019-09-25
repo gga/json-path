@@ -26,7 +26,7 @@
            {:id 45, :foo [{:id 12, :text "bar"},
                           {:id 45, :text "hello"}]}) => ["hello"]
   (at-path "$.foo[*].bar[*].baz"
-           {:foo [{:bar [{:baz "hello"}]}]}) => [["hello"]])
+           {:foo [{:bar [{:baz "hello"}]}]}) => ["hello"])
 
 (facts
   (-> (query "$.hello"
