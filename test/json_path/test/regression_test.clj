@@ -8,6 +8,12 @@
 (defn queries_from_suite [suite-yaml]
   (:queries (yaml/from-file suite-yaml)))
 
+(defn- query-implementation [{:keys [selector document ordered]}]
+  (let [current (json-path/at-path selector document)]
+    (if (= ordered false)
+      (sort-by json/write-str current)
+      current)))
+
 (deftest regression
   (let [non-consensus-query-ids (->> (queries_from_suite "test/Clojure_json-path.yaml")
                                      (map :id)
@@ -17,14 +23,10 @@
          (map (fn [{:keys [id selector document ordered] :as query}]
                 (let [expected (if (contains? query :scalar-consensus)
                                  (:scalar-consensus query)
-                                 (:consensus query))
-                      current (json-path/at-path selector document)
-                      current-reordered (if (= ordered false)
-                                          (sort-by json/write-str current)
-                                          current)]
+                                 (:consensus query))]
                   (testing id
                     (is (= expected
-                           current-reordered))))))
+                           (query-implementation query)))))))
          doall)))
 
 (defn- report-change [current-reordered status result {:keys [selector document consensus id]}]
@@ -50,21 +52,18 @@
         query-lookup (zipmap (map :id all-queries)
                              all-queries)]
     (->> (queries_from_suite "test/Clojure_json-path.yaml")
-       (map (fn [{:keys [id status result] :as query}]
-              (let [{:keys [selector document ordered]} (get query-lookup id)]
+       (map (fn [{:keys [id status result]}]
+              (let [query (get query-lookup id)]
                (testing id
                 (try
-                  (let [current (doall (json-path/at-path selector document))
-                        current-reordered (if (= ordered false)
-                                            (sort-by json/write-str current)
-                                            current)]
+                  (let [current (query-implementation query)]
                     (when (or (= "error" status)
-                              (not= result current-reordered))
-                      (report-change current-reordered status result (get query-lookup id))))
+                              (not= result current))
+                      (report-change current status result query)))
                   (catch Exception e
                     (when (not= "error"
                                 status)
                       (do
-                        (println (format "Warning: implementation has changed to error for %s: %s (status %s)" id selector status))
+                        (println (format "Warning: implementation has changed to error for %s: %s (status %s)" id (:selector query) status))
                         (println (format "         was    %s" (pr-str result)))))))))))
        doall)))
