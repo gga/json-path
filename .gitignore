@@ -2,3 +2,4 @@ pom.xml
 /target
 .lein-failures
 .lein-deps-sum
+/pom.xml.asc

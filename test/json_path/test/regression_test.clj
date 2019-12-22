@@ -9,19 +9,25 @@
   (:queries (yaml/from-file suite-yaml)))
 
 (deftest regression
-  (->> (queries_from_suite "test/Clojure_json-path.yaml")
-       (filter (fn [{status :status}] (= status "pass")))
-       (map (fn [{:keys [selector document result id ordered]}]
-              (let [current (json-path/at-path selector document)
-                    current-reordered (if (= ordered false)
-                                        (sort-by json/write-str current)
-                                        current)]
-                (testing id
-                  (is (= result
-                         current-reordered))))))
-       doall))
+  (let [non-consensus-query-ids (->> (queries_from_suite "test/Clojure_json-path.yaml")
+                                     (map :id)
+                                     set)]
+    (->> (queries_from_suite "test/consensus.yaml")
+         (remove (fn [{id :id}] (contains? non-consensus-query-ids id)))
+         (map (fn [{:keys [id selector document ordered] :as query}]
+                (let [expected (if (contains? query :scalar-consensus)
+                                 (:scalar-consensus query)
+                                 (:consensus query))
+                      current (json-path/at-path selector document)
+                      current-reordered (if (= ordered false)
+                                          (sort-by json/write-str current)
+                                          current)]
+                  (testing id
+                    (is (= expected
+                           current-reordered))))))
+         doall)))
 
-(defn- report-change [current-reordered {:keys [selector document result status consensus id]}]
+(defn- report-change [current-reordered status result {:keys [selector document consensus id]}]
   (println
    (format "Warning: implementation has changed for %s: %s (previous status %s)"
            id selector status))
@@ -40,10 +46,13 @@
 ;; recorded results which however are not backed by a consensus based
 ;; on https://github.com/cburgmer/json-path-comparison
 (deftest warning-on-changes-for-non-conforming-queries-based-on-consensus
-  (->> (queries_from_suite "test/Clojure_json-path.yaml")
-       (filter (fn [{status :status}] (not= status "pass")))
-       (map (fn [{:keys [selector document result status consensus id ordered] :as query}]
-              (testing id
+  (let [all-queries (queries_from_suite "test/consensus.yaml")
+        query-lookup (zipmap (map :id all-queries)
+                             all-queries)]
+    (->> (queries_from_suite "test/Clojure_json-path.yaml")
+       (map (fn [{:keys [id status result] :as query}]
+              (let [{:keys [selector document ordered]} (get query-lookup id)]
+               (testing id
                 (try
                   (let [current (doall (json-path/at-path selector document))
                         current-reordered (if (= ordered false)
@@ -51,11 +60,11 @@
                                             current)]
                     (when (or (= "error" status)
                               (not= result current-reordered))
-                      (report-change current query)))
+                      (report-change current-reordered status result (get query-lookup id))))
                   (catch Exception e
                     (when (not= "error"
                                 status)
                       (do
                         (println (format "Warning: implementation has changed to error for %s: %s (status %s)" id selector status))
-                        (println (format "         was    %s" (pr-str result))))))))))
-       doall))
+                        (println (format "         was    %s" (pr-str result)))))))))))
+       doall)))
