@@ -23,7 +23,7 @@
   (let [non-consensus-query-ids (->> (queries_from_suite "test/Clojure_json-path.yaml")
                                      (map :id)
                                      set)]
-    (->> (queries_from_suite "test/consensus.yaml")
+    (->> (queries_from_suite "test/regression_suite.yaml")
          (remove (fn [{id :id}] (contains? non-consensus-query-ids id)))
          (map (fn [{:keys [id] :as query}]
                 (testing id
@@ -51,7 +51,7 @@
 ;; recorded results which however are not backed by a consensus based
 ;; on https://github.com/cburgmer/json-path-comparison
 (deftest warning-on-changes-for-non-conforming-queries-based-on-consensus
-  (let [all-queries (queries_from_suite "test/consensus.yaml")
+  (let [all-queries (queries_from_suite "test/regression_suite.yaml")
         query-lookup (zipmap (map :id all-queries)
                              all-queries)]
     (->> (queries_from_suite "test/Clojure_json-path.yaml")
