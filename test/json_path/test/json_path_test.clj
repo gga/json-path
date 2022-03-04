@@ -47,7 +47,7 @@
              {:hello "world"})
       :value) => "world"
   (-> (query "$.hello/world"
-              {:hello/world "foo"})
+             {:hello/world "foo"})
       :value) => "foo"
   (-> (query "$.hello/world.world/name"
               {:hello/world {:world/name "earth"}})
