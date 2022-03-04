@@ -1,19 +1,42 @@
 (ns json-path.parser)
 
-(declare parse)
+(declare parse parse-expr)
 
 (defn extract-sub-tree [start end stream]
   (take-while #(not (= end %)) (drop-while #(= start %) stream)))
 
-(defn parse-expr [remaining]
-  (let [ops {"=" :eq, "!=" :neq, "<" :lt, "<=" :lt-eq, ">" :gt, ">=" :gt-eq}
-        supported-ops (set (keys ops))
-        lhs (take-while #(not (supported-ops %)) remaining)
-        op (first (drop-while #(not (supported-ops %)) remaining))
-        rhs (rest (drop-while #(not (supported-ops %)) remaining))]
-    (if (nil? op)
-      [:some (parse lhs)]
-      [(ops op) (parse lhs) (parse rhs)])))
+(def boolean-ops
+  {"&&" :and, "||" :or})
+
+(def boolean-ops-strings (set (keys boolean-ops)))
+
+(def comparator-ops
+  {"=" :eq, "!=" :neq, "<" :lt, "<=" :lt-eq, ">" :gt, ">=" :gt-eq})
+
+(defn parse-boolean-expr [expr]
+  (let [lhs (take-while #(not (boolean-ops-strings %)) expr)
+        op (first (drop-while #(not (boolean-ops-strings %)) expr))
+        rhs (rest (drop-while #(not (boolean-ops-strings %)) expr))]
+    [(boolean-ops op) (parse-expr lhs) (parse-expr rhs)]))
+
+(defn parse-comparator-expr [expr]
+  (let [supported-ops (set (keys comparator-ops))
+        lhs (take-while #(not (supported-ops %)) expr)
+        op (first (drop-while #(not (supported-ops %)) expr))
+        rhs (rest (drop-while #(not (supported-ops %)) expr))]
+    ; (if (nil? op)
+    ;   [:some (parse lhs)])
+    [(comparator-ops op) (parse lhs) (parse rhs)]))
+
+(defn parse-expr [expr]
+  (cond
+    (some boolean-ops-strings expr) (parse-boolean-expr expr)
+    (some (set (keys comparator-ops)) expr) (parse-comparator-expr expr)
+    :else [:some (parse expr)]))
+
+  ; (if (some boolean-ops-strings expr)
+  ;   (parse-boolean-expr expr)
+  ;   (parse-comparator-expr expr)))
 
 (defn parse-indexer [remaining]
   (let [next (first remaining)]
@@ -36,6 +59,8 @@
      (empty? remaining) []
      (re-matches #"\d+" next) [:val (Integer/parseInt next)]
      (re-matches #"\d+\.\d*" next) [:val (Double/parseDouble next)]
+     (= next "true") [:val true]
+     (= next "false") [:val false]
      (= "\"" next) [:val (apply str (extract-sub-tree "\"" "\"" remaining))]
      (= "[" next) (do
                     (let [idx (parse-indexer (extract-sub-tree "[" "]" remaining))
@@ -51,4 +76,4 @@
                  [:path pth]))))))
 
 (defn parse-path [path]
-  (parse (re-seq #"<=|>=|\.\.|[.*$@\[\]\(\)\"=<>]|\d+|[\w-\/]+|\?\(|!=" path)))
+  (parse (re-seq #"<=|>=|\.\.|[.*$@\[\]\(\)\"=<>]|\d+|[\w-\/]+|\?\(|!=|&&|true|false" path)))

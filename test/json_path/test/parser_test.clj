@@ -12,7 +12,7 @@
   =>
   [:eq [:path [[:current] [:child] [:key "foo"]]] [:val "baz"]])
 
-(facts "equality expressions should be parseable"
+(facts "comparator expressions should be parseable"
   (parse-expr '("\"" "bar" "\"" "!=" "\"" "bar" "\"")) => [:neq [:val "bar"] [:val "bar"]]
   (parse-expr '("\"" "bar" "\"" "<" "\"" "bar" "\"")) => [:lt [:val "bar"] [:val "bar"]]
   (parse-expr '("\"" "bar" "\"" "<=" "\"" "bar" "\"")) => [:lt-eq [:val "bar"] [:val "bar"]]
@@ -20,6 +20,13 @@
   (parse-expr '("\"" "bar" "\"" ">=" "\"" "bar" "\"")) => [:gt-eq [:val "bar"] [:val "bar"]]
   (parse-expr '("\"" "bar" "\"" "=" "42")) => [:eq [:val "bar"] [:val 42]]
   (parse-expr '("\"" "bar" "\"" "=" "3.1415")) => [:eq [:val "bar"] [:val 3.1415]])
+
+(facts "boolean expressions should be parseable"
+  (parse-expr '("\"" "bar" "\"" "&&" "\"" "bar" "\"")) => [:and [:some [:val "bar"]] [:some [:val "bar"]]]
+  (parse-expr '("\"" "bar" "\"" "&&" "true")) => [:and [:some [:val "bar"]] [:some [:val true]]]
+  (parse-expr '("false" "&&" "\"" "bar" "\"")) => [:and [:some [:val false]] [:some [:val "bar"]]]
+  (parse-expr '("\"" "bar" "\"" "||" "\"" "bar" "\"")) => [:or [:some [:val "bar"]] [:some [:val "bar"]]]
+  (parse-expr '("\"" "bar" "\"" "=" "42" "&&" "\"" "bar" "\"")) => [:and [:eq [:val "bar"] [:val 42]] [:some [:val "bar"]]])
 
 (fact
   (parse-indexer '("*")) => [:index "*"]
@@ -53,6 +60,19 @@
                                                                 [:child]
                                                                 [:key "bar"]]]
                                                         [:val 2]]]]]
+  (parse-path "$[?(@.bar>42 && @.bar<44)]") => [:path [[:root]]
+                                                [:selector [:filter
+                                                            [:and
+                                                             [:gt
+                                                              [:path [[:current]
+                                                                      [:child]
+                                                                      [:key "bar"]]]
+                                                              [:val 42]]
+                                                             [:lt
+                                                              [:path [[:current]
+                                                                      [:child]
+                                                                      [:key "bar"]]]
+                                                              [:val 44]]]]]]
   (parse-path "$.foo[?(@.bar=\"baz\")].hello") => [:path [[:root] [:child] [:key "foo"]]
                                                    [:selector [:filter [:eq [:path [[:current]
                                                                                     [:child]

@@ -30,16 +30,16 @@
   (walk-path [[:root]] {:root (m/root ...root...), :current  (m/root ...obj...)}) => (m/create ...root... [])
   (walk-path [[:root] [:child] [:key "foo"]] {:root (m/root {:foo "bar"})}) => (m/create "bar" [:foo])
   (walk-path [[:all-children]] {:current (m/root {:foo "bar" :baz {:qux "zoo"}})}) => (list (m/create {:foo "bar" :baz {:qux "zoo"}} [])
-                                                                                             (m/create {:qux "zoo"} [:baz]))
+                                                                                            (m/create {:qux "zoo"} [:baz]))
   (walk-path [[:all-children] [:key "bar"]]
              {:current (m/root '([{:bar "hello"}]))}) => (list (m/create "hello" [0 0 :bar]))
   (walk-path [[:all-children] [:key "bar"]]
              {:current (m/root {:foo [{:bar "wrong"}
-                                       {:bar "baz"}]})}) => (list (m/create "wrong" [:foo 0 :bar])
-                                                                  (m/create "baz" [:foo 1 :bar]))
+                                      {:bar "baz"}]})}) => (list (m/create "wrong" [:foo 0 :bar])
+                                                                 (m/create "baz" [:foo 1 :bar]))
   (walk-path [[:all-children] [:key "foo"]]
              {:current (m/root {:foo [{:foo "foo"}]})}) => (list (m/create [{:foo "foo"}] [:foo])
-                                                                  (m/create "foo" [:foo 0 :foo])))
+                                                                 (m/create "foo" [:foo 0 :foo])))
 
 (facts
   (walk-selector [:index "1"] {:current (m/root ["foo", "bar", "baz"])}) => (m/create "bar" [1])
@@ -79,13 +79,13 @@
   (walk [:path [[:all-children]]]
         {:current
          (m/root (list {:hello {:world "foo"}}
-                        {:baz {:world "bar"}}))}) => (list (m/create [{:hello {:world "foo"}}
-                                                                      {:baz {:world "bar"}}]
-                                                                     [])
-                                                           (m/create {:hello {:world "foo"}} [0])
-                                                           (m/create {:world "foo"} [0 :hello])
-                                                           (m/create {:baz {:world "bar"}} [1])
-                                                           (m/create {:world "bar"} [1 :baz]))
+                       {:baz {:world "bar"}}))}) => (list (m/create [{:hello {:world "foo"}}
+                                                                     {:baz {:world "bar"}}]
+                                                                    [])
+                                                          (m/create {:hello {:world "foo"}} [0])
+                                                          (m/create {:world "foo"} [0 :hello])
+                                                          (m/create {:baz {:world "bar"}} [1])
+                                                          (m/create {:world "bar"} [1 :baz]))
   (walk [:path [[:all-children]]]
         {:current (m/root "scalar")}) => (list (m/create "scalar" []))
   (walk [:path [[:all-children] [:key "world"]]]

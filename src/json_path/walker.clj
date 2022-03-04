@@ -7,7 +7,7 @@
   (apply op-form (map #(eval-expr % context) operands)))
 
 (defn eval-expr [[expr-type & operands :as expr] context]
-  (let [ops {:eq =, :neq not=, :lt <, :lt-eq <=, :gt >, :gt-eq >=}]
+  (let [ops {:eq =, :neq not=, :lt <, :lt-eq <=, :gt >, :gt-eq >=, :and every?}]
     (cond
      (contains? ops expr-type) (eval-eq-expr (expr-type ops) context operands)
      (= expr-type :some) (some? (:value (walk (first operands) context)))
@@ -83,8 +83,8 @@
 
 (defn walk [[opcode operand continuation] context]
   (let [down-obj (cond
-         (= opcode :path) (walk-path operand context)
-         (= opcode :selector) (walk-selector operand context))]
+                  (= opcode :path) (walk-path operand context)
+                  (= opcode :selector) (walk-selector operand context))]
     (if continuation
       (map# #(walk continuation (assoc context :current %)) down-obj)
       down-obj)))
