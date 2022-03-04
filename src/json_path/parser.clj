@@ -8,10 +8,11 @@
 (def boolean-ops
   {"&&" :and, "||" :or})
 
-(def boolean-ops-strings (set (keys boolean-ops)))
-
 (def comparator-ops
   {"=" :eq, "!=" :neq, "<" :lt, "<=" :lt-eq, ">" :gt, ">=" :gt-eq})
+
+(def boolean-ops-strings (set (keys boolean-ops)))
+(def comparator-ops-strings (set (keys comparator-ops)))
 
 (defn parse-boolean-expr [expr]
   (let [lhs (take-while #(not (boolean-ops-strings %)) expr)
@@ -20,12 +21,9 @@
     [(boolean-ops op) (parse-expr lhs) (parse-expr rhs)]))
 
 (defn parse-comparator-expr [expr]
-  (let [supported-ops (set (keys comparator-ops))
-        lhs (take-while #(not (supported-ops %)) expr)
-        op (first (drop-while #(not (supported-ops %)) expr))
-        rhs (rest (drop-while #(not (supported-ops %)) expr))]
-    ; (if (nil? op)
-    ;   [:some (parse lhs)])
+  (let [lhs (take-while #(not (comparator-ops-strings %)) expr)
+        op (first (drop-while #(not (comparator-ops-strings %)) expr))
+        rhs (rest (drop-while #(not (comparator-ops-strings %)) expr))]
     [(comparator-ops op) (parse lhs) (parse rhs)]))
 
 (defn parse-expr [expr]
@@ -33,10 +31,6 @@
     (some boolean-ops-strings expr) (parse-boolean-expr expr)
     (some (set (keys comparator-ops)) expr) (parse-comparator-expr expr)
     :else [:some (parse expr)]))
-
-  ; (if (some boolean-ops-strings expr)
-  ;   (parse-boolean-expr expr)
-  ;   (parse-comparator-expr expr)))
 
 (defn parse-indexer [remaining]
   (let [next (first remaining)]
