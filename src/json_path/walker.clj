@@ -3,16 +3,34 @@
 
 (declare walk eval-expr)
 
-(defn eval-eq-expr [op-form context operands]
-  (apply op-form (map #(eval-expr % context) operands)))
+(defn map-with-value? [m]
+  (and (map? m)
+       (contains? m :value)))
+
+(defn eval-bool-expr [op-form context operands]
+  (boolean (apply op-form (map #(eval-expr % context) operands))))
+
+(def boolean-ops
+  "expression operands that result in a boolean result"
+  {:eq =
+   :neq not=
+   :lt <
+   :lt-eq <=
+   :gt >
+   :gt-eq >=
+   ;; NOTE: 'and' and 'or' are macros in Clojure, so we need to wrap them in functions here
+   :and #(and %1 %2)
+   :or #(or %1 %2)})
 
 (defn eval-expr [[expr-type & operands :as expr] context]
-  (let [ops {:eq =, :neq not=, :lt <, :lt-eq <=, :gt >, :gt-eq >=, :and every?}]
-    (cond
-     (contains? ops expr-type) (eval-eq-expr (expr-type ops) context operands)
-     (= expr-type :some) (some? (:value (walk (first operands) context)))
-     (= expr-type :val) (first operands)
-     (= expr-type :path) (:value (walk expr context)))))
+  (cond
+   (contains? boolean-ops expr-type) (eval-bool-expr (get boolean-ops expr-type) context operands)
+   (= expr-type :bool) (let [inner-val (walk (first operands) context)]
+                         (if (map-with-value? inner-val)
+                           (:value inner-val)
+                           inner-val))
+   (= expr-type :val) (first operands)
+   (= expr-type :path) (:value (walk expr context))))
 
 (defn map# [func obj]
   (if (seq? obj)
@@ -81,10 +99,12 @@
                                        (filter (fn [[key val]] (eval-expr (second sel-expr) (assoc context :current (m/root val)))))
                                        (map (fn [[key val]] (m/with-context key val (:current context))))))))
 
-(defn walk [[opcode operand continuation] context]
+(defn walk [[opcode operand continuation :as expr] context]
   (let [down-obj (cond
-                  (= opcode :path) (walk-path operand context)
-                  (= opcode :selector) (walk-selector operand context))]
+                   (= opcode :path) (walk-path operand context)
+                   (= opcode :selector) (walk-selector operand context)
+                   (= opcode :val) (eval-expr expr context)
+                   :else nil)]
     (if continuation
       (map# #(walk continuation (assoc context :current %)) down-obj)
       down-obj)))

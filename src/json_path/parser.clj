@@ -30,7 +30,7 @@
   (cond
     (some boolean-ops-strings expr) (parse-boolean-expr expr)
     (some (set (keys comparator-ops)) expr) (parse-comparator-expr expr)
-    :else [:some (parse expr)]))
+    :else [:bool (parse expr)]))
 
 (defn parse-indexer [remaining]
   (let [next (first remaining)]
