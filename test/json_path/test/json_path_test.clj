@@ -25,7 +25,7 @@
                   {:bar "baz" :hello "world"}]}) => ["world"]
   (at-path "$.foo[?(@.id=$.id)].text"
            {:id 45, :foo [{:id 12, :text "bar"},
-                                      {:id 45, :text "hello"}]}) => ["hello"]
+                          {:id 45, :text "hello"}]}) => ["hello"]
   (at-path "$.foo[*].bar[*].baz"
            {:foo [{:bar [{:baz "hello"}]}]}) => ["hello"]
   (at-path "$[?(@.key>42 && @.key<44)]"
