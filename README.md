@@ -50,14 +50,16 @@ operations like length should be added.
 Accepts standard Clojure data structures: maps and sequences. Assumes
 that maps contains keywords for the child objects.
 
-    (require 'json-path)
+```clj
+  (require 'json-path)
 
-    (json-path/at-path "$.foo" {:foo {:bar "Hello, world!"}})
-    ; => {:bar "Hello, world!"}
+  (json-path/at-path "$.foo" {:foo {:bar "Hello, world!"}})
+  ; => {:bar "Hello, world!"}
 
-    (->> (json-path/query "$..bar" {:foo {:bar "Hello"}})
-         (map :path))
-    ; => ([:foo :bar])
+  (->> (json-path/query "$..bar" {:foo {:bar "Hello"}})
+       (map :path))
+  ; => ([:foo :bar])
+```
 
 ## Contributors
 
@@ -65,6 +67,7 @@ that maps contains keywords for the child objects.
 * [Matthew Gertner](https://github.com/matthewgertner)
 * [Christoph Burgmer](https://github.com/cburgmer)
 * [Trevor Hartman](https://github.com/devth)
+* [Chris Oakman](https://github.com/oakmac)
 
 ## License
 
