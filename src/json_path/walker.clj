@@ -7,8 +7,12 @@
   (and (map? m)
        (contains? m :value)))
 
-(defn eval-bool-expr [op-form context operands]
-  (boolean (apply op-form (map #(eval-expr % context) operands))))
+;; NOTE: this function produces a runtime error when comparing things of different types
+;; ie: (< 3 "foo")
+;; Will need to coerce the types in order to get the "Filter expression with boolean or operator and value false"
+;; test case to pass
+(defn eval-bool-expr [comp-fn context operands]
+  (boolean (apply comp-fn (map #(eval-expr % context) operands))))
 
 (def boolean-ops
   "expression operands that result in a boolean result"
