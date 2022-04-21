@@ -7,12 +7,32 @@
   (and (map? m)
        (contains? m :value)))
 
-;; NOTE: this function produces a runtime error when comparing things of different types
-;; ie: (< 3 "foo")
-;; Will need to coerce the types in order to get the "Filter expression with boolean or operator and value false"
-;; test case to pass
+;; 'and' and 'or' are macros in Clojure, so we wrap them in functions here so they
+;; can be passed to apply and tested for equality
+(defn and* [a b]
+  (and a b))
+
+(defn or* [a b]
+  (or a b))
+
 (defn eval-bool-expr [comp-fn context operands]
-  (boolean (apply comp-fn (map #(eval-expr % context) operands))))
+  (boolean
+    (apply
+      (fn [a b]
+        (cond
+          ;; allow less-than, greater-than comparisons if both args are Numbers or Strings
+          (and (contains? #{< <= > >=} comp-fn)
+               (or (and (number? a) (number? b))
+                   (and (string? a) (string? b))))
+          (comp-fn a b)
+
+          ;; always allow equality comparisons as well as 'and' and 'or'
+          (contains? #{= not= and* or*} comp-fn)
+          (comp-fn a b)
+
+          ;; else the two values cannot be compared: return false
+          :else false))
+      (map #(eval-expr % context) operands))))
 
 (def boolean-ops
   "expression operands that result in a boolean result"
@@ -22,9 +42,9 @@
    :lt-eq <=
    :gt >
    :gt-eq >=
-   ;; NOTE: 'and' and 'or' are macros in Clojure, so we need to wrap them in functions here
-   :and #(and %1 %2)
-   :or #(or %1 %2)})
+   ;; NOTE: see comment above, these macros are wrapped as functions
+   :and and*
+   :or or*})
 
 (defn eval-expr [[expr-type & operands :as expr] context]
   (cond
