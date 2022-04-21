@@ -5,18 +5,50 @@
 
 (unfinished)
 
-(facts
+(facts "evaluate expressions"
   (eval-expr [:eq [:val "a"] [:val "b"]] {}) => falsey
   (eval-expr [:eq [:val "a"] [:val "a"]] {}) => truthy
   (eval-expr [:neq [:val "a"] [:val "b"]] {}) => truthy
   (eval-expr [:lt [:val 10] [:val 11]] {}) => truthy
   (eval-expr [:lt-eq [:val 10] [:val 10]] {}) => truthy
   (eval-expr [:gt [:val 10] [:val 9]] {}) => truthy
+  (eval-expr [:gt-eq [:val 10] [:val 9]] {}) => truthy
   (eval-expr [:gt-eq [:val 10] [:val 10]] {}) => truthy
   (eval-expr [:path [[:key "foo"]]] {:current (m/root {:foo "bar"})}) => "bar"
-  (eval-expr [:some [:path [[:current] [:child] [:key "foo"]]]] {:current (m/root {:foo "bar"})}) => truthy
-  (eval-expr [:some [:path [[:current] [:child] [:key "foo"]]]] {:current (m/root {:foo nil})}) => falsey
-  (eval-expr [:eq [:path [[:key "foo"]]] [:val "bar"]] {:current (m/root {:foo "bar"})}) => truthy)
+  (eval-expr [:bool [:path [[:current] [:child] [:key "foo"]]]] {:current (m/root {:foo "bar"})}) => truthy
+  (eval-expr [:bool [:path [[:current] [:child] [:key "foo"]]]] {:current (m/root {:foo nil})}) => falsey
+  (eval-expr [:eq [:path [[:key "foo"]]] [:val "bar"]] {:current (m/root {:foo "bar"})}) => truthy
+
+  (eval-expr [:val true] {}) => truthy
+  (eval-expr [:val false] {}) => falsey
+  (eval-expr [:bool [:val true]] {}) => truthy
+  (eval-expr [:bool [:val false]] {}) => falsey
+
+  ;; 'and' expressions
+  (eval-expr [:and [:bool [:val true]] [:bool [:val true]]] {}) => truthy
+  (eval-expr [:and [:bool [:val true]] [:bool [:val false]]] {}) => falsey
+  (eval-expr [:and [:bool [:val false]] [:bool [:val true]]] {}) => falsey
+  (eval-expr [:and [:bool [:val false]] [:bool [:val false]]] {}) => falsey
+  (eval-expr [:and [:bool [:val true]] [:bool [:val "bar"]]] {}) => truthy
+  (eval-expr [:and [:bool [:val "bar"]] [:bool [:val false]]] {}) => falsey
+  (eval-expr [:and [:bool [:val true]] [:lt [:val 10] [:val 11]]] {}) => truthy
+  (eval-expr [:and [:bool [:val true]]
+                   [:path [[:key "foo"]]]] {:current (m/root {:foo "bar"}) => truthy})
+  (eval-expr [:and [:bool [:val true]]
+                   [:path [[:key "foo"]]]] {:current (m/root {:foo nil}) => falsey})
+
+  ;; 'or' expressions
+  (eval-expr [:or [:bool [:val true]] [:bool [:val true]]] {}) => truthy
+  (eval-expr [:or [:bool [:val true]] [:bool [:val false]]] {}) => truthy
+  (eval-expr [:or [:bool [:val false]] [:bool [:val true]]] {}) => truthy
+  (eval-expr [:or [:bool [:val false]] [:bool [:val false]]] {}) => falsey
+  (eval-expr [:or [:bool [:val true]] [:bool [:val "bar"]]] {}) => truthy
+  (eval-expr [:or [:bool [:val "bar"]] [:bool [:val false]]] {}) => truthy
+  (eval-expr [:or [:bool [:val true]] [:lt [:val 10] [:val 11]]] {}) => truthy
+  (eval-expr [:or [:bool [:val false]]
+                  [:path [[:key "foo"]]]] {:current (m/root {:foo "bar"}) => truthy})
+  (eval-expr [:or [:bool [:val false]]
+                  [:path [[:key "foo"]]]] {:current (m/root {:foo nil}) => falsey}))
 
 (facts
   (select-by [:key "hello"] (m/root {:hello "world"})) => (m/create "world" [:hello])
@@ -117,7 +149,7 @@
         {:root (m/root {:foo [{:bar "wrong" :hello "goodbye"}
                               {:bar "baz" :hello "world"}]})}) => (list (m/create "world" [:foo 1 :hello]))
   (walk [:path [[:root]]
-         [:selector [:filter [:some [:path [[:current]
+         [:selector [:filter [:bool [:path [[:current]
                                             [:child]
                                             [:key "bar"]]]]]]]
         {:root (m/root {:hello "world" :foo {:bar "baz"}})}) => (list (m/create {:bar "baz"} [:foo])))
