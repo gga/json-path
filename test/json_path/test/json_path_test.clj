@@ -5,6 +5,19 @@
 
 (unfinished)
 
+(def keys-of-many-types
+  [{:key 1}
+   {:key 3}
+   {:key "nice"}
+   {:key true}
+   {:key nil}
+   {:key false}
+   {:key {}}
+   {:key []}
+   {:key -1}
+   {:key 0}
+   {:key ""}])
+
 (facts
   (at-path "$" ...json...) => ...json...
   (at-path "$.hello" {:hello "world"}) => "world"
@@ -28,25 +41,37 @@
                           {:id 45, :text "hello"}]}) => ["hello"]
   (at-path "$.foo[*].bar[*].baz"
            {:foo [{:bar [{:baz "hello"}]}]}) => ["hello"]
+  ;; Filter expression with boolean and operator
   (at-path "$[?(@.key>42 && @.key<44)]"
            [{:key 42}, {:key 43}, {:key 44}]) => [{:key 43}]
+  ;; Filter expression with boolean and operator and value false
+  (at-path "$[?(@.key>0 && false)]"
+           keys-of-many-types) => []
+  ;; Filter expression with boolean and operator and value true
+  (at-path "$[?(@.key>0 && true)]"
+           keys-of-many-types) => [{:key 1}, {:key 3}]
+  ;; Filter expression with boolean or operator
   (at-path "$[?(@.key>43 || @.key<43)]"
-           [{:key 42}, {:key 43}, {:key 44}]) => [{:key 42}, {:key 44}])
-
-  ;; TODO: add this case, comparator is blowing up comparing against different types
-  ;; "Filter expression with boolean or operator and value false"
-  ; (at-path "$[?(@.key>0 && false)]"
-  ;          [{:key 1}
-  ;           {:key 3}
-  ;           {:key "nice"}
-  ;           {:key true}
-  ;           {:key nil}
-  ;           {:key false}
-  ;           {:key {}}
-  ;           {:key []}
-  ;           {:key -1}
-  ;           {:key 0}
-  ;           {:key ""}]) => []
+           [{:key 42}, {:key 43}, {:key 44}]) => [{:key 42}, {:key 44}]
+  ;; Filter expression with boolean or operator and value false
+  (at-path "$[?(@.key>0 || false)]"
+           keys-of-many-types) => [{:key 1}, {:key 3}]
+  ;; Filter expression with boolean or operator and value true
+  (at-path "$[?(@.key>0 || true)]"
+           keys-of-many-types) => keys-of-many-types)
+  ;; TODO: Filter expression with different grouped operators
+  ;; NOTE: the parser will need to be updated in order to get this test to work
+  ; (at-path "$[?(@.a && (@.b || @.c))]"
+  ;          [{:a true}
+  ;           {:a true, :b true}
+  ;           {:a true, :b true, :c true}
+  ;           {:b true, :c true}
+  ;           {:a true, :c true}
+  ;           {:c true}
+  ;           {:b true}])
+  ; => [{:a true, :b true}
+  ;     {:a true, :b true, :c true}
+  ;     {:a true, :c true}])
 
 (facts
   (-> (query "$.hello"
