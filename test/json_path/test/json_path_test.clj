@@ -1,5 +1,6 @@
 (ns json-path.test.json-path-test
-  [:use [json-path]
+  [:use
+   [json-path]
    [midje.sweet]])
 
 (unfinished)
@@ -24,9 +25,28 @@
                   {:bar "baz" :hello "world"}]}) => ["world"]
   (at-path "$.foo[?(@.id=$.id)].text"
            {:id 45, :foo [{:id 12, :text "bar"},
-                          {:id 45, :text "hello"}]}) => ["hello"]
+                                      {:id 45, :text "hello"}]}) => ["hello"]
   (at-path "$.foo[*].bar[*].baz"
-           {:foo [{:bar [{:baz "hello"}]}]}) => ["hello"])
+           {:foo [{:bar [{:baz "hello"}]}]}) => ["hello"]
+  (at-path "$[?(@.key>42 && @.key<44)]"
+           [{:key 42}, {:key 43}, {:key 44}]) => [{:key 43}]
+  (at-path "$[?(@.key>43 || @.key<43)]"
+           [{:key 42}, {:key 43}, {:key 44}]) => [{:key 42}, {:key 44}])
+
+  ;; TODO: add this case, comparator is blowing up comparing against different types
+  ;; "Filter expression with boolean or operator and value false"
+  ; (at-path "$[?(@.key>0 && false)]"
+  ;          [{:key 1}
+  ;           {:key 3}
+  ;           {:key "nice"}
+  ;           {:key true}
+  ;           {:key nil}
+  ;           {:key false}
+  ;           {:key {}}
+  ;           {:key []}
+  ;           {:key -1}
+  ;           {:key 0}
+  ;           {:key ""}]) => []
 
 (facts
   (-> (query "$.hello"
@@ -55,4 +75,10 @@
   (->> (query "$.foo[?(@.bar=\"baz\")].hello"
               {:foo [{:bar "wrong" :hello "goodbye"}
                      {:bar "baz" :hello "world"}]})
-       (map :path)) => '([:foo 1 :hello]))
+       (map :path)) => '([:foo 1 :hello])
+  (->> (query "$[?(@.key>42 && @.key<44)]"
+              [{:key 42}, {:key 43}, {:key 44}])
+       (map :value)) => [{:key 43}]
+  (->> (query "$[?(@.key>43 || @.key<43)]"
+              [{:key 42}, {:key 43}, {:key 44}])
+       (map :value)) => [{:key 42}, {:key 44}])

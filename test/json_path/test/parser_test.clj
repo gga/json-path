@@ -73,6 +73,28 @@
                                                                       [:child]
                                                                       [:key "bar"]]]
                                                               [:val 44]]]]]]
+  (parse-path "$[?(@.bar>42 && true)]") => [:path [[:root]]
+                                            [:selector [:filter
+                                                        [:and
+                                                         [:gt
+                                                          [:path [[:current]
+                                                                  [:child]
+                                                                  [:key "bar"]]]
+                                                          [:val 42]]
+                                                         [:bool [:val true]]]]]]
+  (parse-path "$[?(@.bar>42 || @.bar<44)]") => [:path [[:root]]
+                                                [:selector [:filter
+                                                            [:or
+                                                             [:gt
+                                                              [:path [[:current]
+                                                                      [:child]
+                                                                      [:key "bar"]]]
+                                                              [:val 42]]
+                                                             [:lt
+                                                              [:path [[:current]
+                                                                      [:child]
+                                                                      [:key "bar"]]]
+                                                              [:val 44]]]]]]
   (parse-path "$.foo[?(@.bar=\"baz\")].hello") => [:path [[:root] [:child] [:key "foo"]]
                                                    [:selector [:filter [:eq [:path [[:current]
                                                                                     [:child]

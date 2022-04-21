@@ -70,4 +70,4 @@
                  [:path pth]))))))
 
 (defn parse-path [path]
-  (parse (re-seq #"<=|>=|\.\.|[.*$@\[\]\(\)\"=<>]|\d+|[\w-\/]+|\?\(|!=|&&|true|false" path)))
+  (parse (re-seq #"<=|>=|\.\.|[.*$@\[\]\(\)\"=<>]|\d+|[\w-\/]+|\?\(|!=|&&|\|\||true|false" path)))
