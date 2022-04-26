@@ -3,10 +3,6 @@
 
 (declare walk eval-expr)
 
-(defn map-with-value? [m]
-  (and (map? m)
-       (contains? m :value)))
-
 ;; 'and' and 'or' are macros in Clojure, so we wrap them in functions here so they
 ;; can be passed to apply and tested for equality
 (defn and* [a b]
