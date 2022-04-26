@@ -58,7 +58,31 @@
            keys-of-many-types) => [{:key 1}, {:key 3}]
   ;; Filter expression with boolean or operator and value true
   (at-path "$[?(@.key>0 || true)]"
-           keys-of-many-types) => keys-of-many-types)
+           keys-of-many-types) => keys-of-many-types
+  ;; Filter expression with value true
+  (at-path "$[?(@.key)]"
+           [{:some "some value"}
+            {:key true}
+            {:key false}
+            {:key nil}
+            {:key "value"}
+            {:key ""}
+            {:key 0}
+            {:key 1}
+            {:key -1}
+            {:key 42}
+            {:key {}}
+            {:key []}])
+  => [{:key true}
+      {:key false}
+      {:key "value"}
+      {:key ""}
+      {:key 0}
+      {:key 1}
+      {:key -1}
+      {:key 42}
+      {:key {}}
+      {:key []}])
   ;; TODO: Filter expression with different grouped operators
   ;; NOTE: the parser will need to be updated in order to get this test to work
   ; (at-path "$[?(@.a && (@.b || @.c))]"
