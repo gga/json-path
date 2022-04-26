@@ -49,10 +49,7 @@
 (defn eval-expr [[expr-type & operands :as expr] context]
   (cond
    (contains? boolean-ops expr-type) (eval-bool-expr (get boolean-ops expr-type) context operands)
-   (= expr-type :bool) (let [inner-val (walk (first operands) context)]
-                         (if (map-with-value? inner-val)
-                           (:value inner-val)
-                           inner-val))
+   (= expr-type :some) (some? (:value (walk (first operands) context)))
    (= expr-type :val) (first operands)
    (= expr-type :path) (:value (walk expr context))))
 
