@@ -22,11 +22,11 @@
   (parse-expr '("\"" "bar" "\"" "=" "3.1415")) => [:eq [:val "bar"] [:val 3.1415]])
 
 (facts "boolean expressions should be parseable"
-  (parse-expr '("\"" "bar" "\"" "&&" "\"" "bar" "\"")) => [:and [:bool [:val "bar"]] [:bool [:val "bar"]]]
-  (parse-expr '("\"" "bar" "\"" "&&" "true")) => [:and [:bool [:val "bar"]] [:bool [:val true]]]
-  (parse-expr '("false" "&&" "\"" "bar" "\"")) => [:and [:bool [:val false]] [:bool [:val "bar"]]]
-  (parse-expr '("\"" "bar" "\"" "||" "\"" "bar" "\"")) => [:or [:bool [:val "bar"]] [:bool [:val "bar"]]]
-  (parse-expr '("\"" "bar" "\"" "=" "42" "&&" "\"" "bar" "\"")) => [:and [:eq [:val "bar"] [:val 42]] [:bool [:val "bar"]]])
+  (parse-expr '("\"" "bar" "\"" "&&" "\"" "bar" "\"")) => [:and [:val "bar"] [:val "bar"]]
+  (parse-expr '("\"" "bar" "\"" "&&" "true")) => [:and [:val "bar"] [:val true]]
+  (parse-expr '("false" "&&" "\"" "bar" "\"")) => [:and [:val false] [:val "bar"]]
+  (parse-expr '("\"" "bar" "\"" "||" "\"" "bar" "\"")) => [:or [:val "bar"] [:val "bar"]]
+  (parse-expr '("\"" "bar" "\"" "=" "42" "&&" "\"" "bar" "\"")) => [:and [:eq [:val "bar"] [:val 42]] [:val "bar"]])
 
 (fact
   (parse-indexer '("*")) => [:index "*"]
@@ -51,7 +51,7 @@
   (parse-path "$.foo[3]") => [:path [[:root] [:child] [:key "foo"]] [:selector [:index "3"]]]
   (parse-path "foo[*]") => [:path [[:key "foo"]] [:selector [:index "*"]]]
   (parse-path "$[?(@.baz)]") => [:path [[:root]]
-                                 [:selector [:filter [:bool [:path [[:current]
+                                 [:selector [:filter [:some [:path [[:current]
                                                                     [:child]
                                                                     [:key "baz"]]]]]]]
   (parse-path "$[?(@.bar<2)]") => [:path [[:root]]
@@ -81,7 +81,7 @@
                                                                   [:child]
                                                                   [:key "bar"]]]
                                                           [:val 42]]
-                                                         [:bool [:val true]]]]]]
+                                                         [:val true]]]]]
   (parse-path "$[?(@.bar>42 || @.bar<44)]") => [:path [[:root]]
                                                 [:selector [:filter
                                                             [:or
