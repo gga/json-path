@@ -27,10 +27,14 @@
     [(comparator-ops op) (parse lhs) (parse rhs)]))
 
 (defn parse-expr [expr]
-  (cond
-    (some boolean-ops-strings expr) (parse-boolean-expr expr)
-    (some (set (keys comparator-ops)) expr) (parse-comparator-expr expr)
-    :else [:bool (parse expr)]))
+  (let [first-el (first expr)]
+    (cond
+      (some boolean-ops-strings expr) (parse-boolean-expr expr)
+      (some (set (keys comparator-ops)) expr) (parse-comparator-expr expr)
+      (= first-el "true") [:val true]
+      (= first-el "false") [:val false]
+      (= "\"" first-el) [:val (apply str (extract-sub-tree "\"" "\"" expr))]
+      :else [:some (parse expr)])))
 
 (defn parse-indexer [remaining]
   (let [next (first remaining)]
