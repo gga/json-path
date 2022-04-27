@@ -1,3 +1,7 @@
+## 2.2.0
+### Added
+- Support for boolean expressions (https://github.com/gga/json-path/pull/16)
+
 ## 2.1.0
 ### Added
 - Support for nested array selection (https://github.com/gga/json-path/pull/14)
